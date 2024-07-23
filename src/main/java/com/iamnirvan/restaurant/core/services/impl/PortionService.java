@@ -9,11 +9,13 @@ import com.iamnirvan.restaurant.core.models.responses.portion.PortionCreateRespo
 import com.iamnirvan.restaurant.core.models.responses.portion.PortionDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.portion.PortionGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.portion.PortionUpdateResponse;
+import com.iamnirvan.restaurant.core.repositories.DishPortionRepository;
 import com.iamnirvan.restaurant.core.repositories.PortionRepository;
 import com.iamnirvan.restaurant.core.services.IPortionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import java.util.List;
 @Log4j2
 public class PortionService implements IPortionService {
     private final PortionRepository portionRepository;
+    private final DishPortionRepository dishPortionRepository;
 
     /**
      * Create multiple portions using a list of create requests
@@ -112,6 +115,7 @@ public class PortionService implements IPortionService {
      * @throws NotFoundException if portion with id does not exist
      */
     @Override
+    @Transactional
     public List<PortionDeleteResponse> deletePortion(List<Long> ids) throws NotFoundException {
         final List<PortionDeleteResponse> result = new ArrayList<>();
 
@@ -122,7 +126,9 @@ public class PortionService implements IPortionService {
             portionRepository.delete(portion);
             log.debug(String.format("Portion deleted: %s", portion));
 
-            // FIXME: do not delete the portion if it is used by dishes...
+            if (dishPortionRepository.existsByPortionId(id)) {
+                throw new BadRequestException(String.format("Cannot delete portion with id %s because it is used by dishes", id));
+            }
 
             result.add(PortionDeleteResponse.builder()
                     .id(portion.getId())

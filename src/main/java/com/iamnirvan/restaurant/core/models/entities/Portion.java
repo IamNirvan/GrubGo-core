@@ -1,5 +1,6 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +24,7 @@ public class Portion extends DateTimeWithUser {
     private Long id;
     private String name;
     @OneToMany(mappedBy = "portion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Set<DishPortion> dishPortions;
     @ManyToMany(mappedBy = "portions", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private Set<FoodOrder> foodOrders;
