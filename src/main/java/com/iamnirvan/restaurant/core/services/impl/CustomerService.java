@@ -1,5 +1,6 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
+import com.iamnirvan.restaurant.core.enums.EActiveStatus;
 import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.entities.Address;
@@ -100,6 +101,7 @@ public class CustomerService implements ICustomerService {
         // Create a default cart for the customer
         Cart cart = Cart.builder()
                 .customer(customer)
+                .status(EActiveStatus.ACTIVE)
                 .build();
         cartRepository.save(cart);
 

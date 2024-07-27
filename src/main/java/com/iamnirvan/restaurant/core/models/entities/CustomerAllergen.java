@@ -13,10 +13,10 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @ToString(callSuper = true)
-@SequenceGenerator(name = "customer_sequence", sequenceName = "customer_sequence", allocationSize = 1)
+@SequenceGenerator(name = "customer_allergen_sequence", sequenceName = "customer_allergen_sequence", allocationSize = 1)
 public class CustomerAllergen extends DateTimeWithoutUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customer_sequence")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customer_allergen_sequence")
     private Long id;
     private String name;
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,5 +1,6 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.iamnirvan.restaurant.core.enums.EStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.Set;
 
 @Table(name = "food_order")
 @Entity
@@ -36,13 +36,13 @@ public class FoodOrder {
 //    )
 //    private Set<Portion> portions;
 
-    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    @JoinTable(
-            name = "food_orders_dish_portions",
-            joinColumns = @JoinColumn(name = "food_order_id"),
-            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
-    )
-    private Set<DishPortion> dishPortions;
+//    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    @JoinTable(
+//            name = "food_orders_dish_portions",
+//            joinColumns = @JoinColumn(name = "food_order_id"),
+//            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
+//    )
+//    private Set<DishPortion> dishPortions;
 //    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
 //    @JoinTable(
 //            name = "order_dish",
@@ -50,6 +50,11 @@ public class FoodOrder {
 //            inverseJoinColumns = @JoinColumn(name = "dish_id")
 //    )
 //    private Set<Dish> dishes;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", referencedColumnName = "id")
+    @JsonBackReference
+    private Cart cart;
+
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE", updatable = false)
     private Instant date;
 }

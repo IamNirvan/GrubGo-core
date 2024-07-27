@@ -2,6 +2,7 @@ package com.iamnirvan.restaurant.core.models.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.iamnirvan.restaurant.core.enums.EActiveStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,7 +20,10 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cart_sequence")
     private Long id;
-    @OneToOne(fetch = FetchType.LAZY)
+    @Enumerated(EnumType.STRING)
+    private EActiveStatus status;
+//    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", referencedColumnName = "id")
     @JsonBackReference
     private Customer customer;
@@ -33,4 +37,7 @@ public class Cart {
     @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<DishPortionCart> dishPortionCarts;
+    @OneToOne(mappedBy = "cart", fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private FoodOrder foodOrder;
 }
