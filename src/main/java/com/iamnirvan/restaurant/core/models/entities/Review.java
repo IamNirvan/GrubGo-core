@@ -1,5 +1,6 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class Review extends DateTimeWithoutUser {
     private Integer rating;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dish_id")
+    @JsonBackReference
     private Dish dish;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")

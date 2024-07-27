@@ -25,6 +25,7 @@ public class Dish extends DateTimeWithUser {
     private String name;
     private String description;
     @OneToMany(mappedBy = "dish", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonManagedReference
     private Set<Review> reviews;
     @OneToMany(mappedBy = "dish", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<DishImage> images;
