@@ -31,28 +31,15 @@ ALTER TABLE cart
 ALTER TABLE cart
     ADD CONSTRAINT FK_CART_ON_CUSTOMER FOREIGN KEY (customer_id) REFERENCES customer (id);
 
-CREATE TABLE cart_dish
-(
-    cart_id BIGINT NOT NULL,
-    dish_id BIGINT NOT NULL,
-    CONSTRAINT pk_cart_dish PRIMARY KEY (cart_id, dish_id)
-);
-
-ALTER TABLE cart_dish
-    ADD CONSTRAINT fk_cart_dish_on_cart FOREIGN KEY (cart_id) REFERENCES cart (id);
-
-ALTER TABLE cart_dish
-    ADD CONSTRAINT fk_cart_dish_on_dish FOREIGN KEY (dish_id) REFERENCES dish (id);
-
 CREATE SEQUENCE IF NOT EXISTS category_sequence START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE category
 (
     id         BIGINT NOT NULL,
-    created    TIMESTAMP WITH TIME ZONE,
     created_by VARCHAR(255),
-    updated    TIMESTAMP WITH TIME ZONE,
+    created    TIMESTAMP WITH TIME ZONE,
     updated_by VARCHAR(255),
+    updated    TIMESTAMP WITH TIME ZONE,
     name       VARCHAR(255),
     CONSTRAINT pk_category PRIMARY KEY (id)
 );
@@ -91,10 +78,10 @@ CREATE SEQUENCE IF NOT EXISTS dish_sequence START WITH 1 INCREMENT BY 1;
 CREATE TABLE dish
 (
     id          BIGINT NOT NULL,
-    created     TIMESTAMP WITH TIME ZONE,
     created_by  VARCHAR(255),
-    updated     TIMESTAMP WITH TIME ZONE,
+    created     TIMESTAMP WITH TIME ZONE,
     updated_by  VARCHAR(255),
+    updated     TIMESTAMP WITH TIME ZONE,
     name        VARCHAR(255),
     description VARCHAR(255),
     CONSTRAINT pk_dish PRIMARY KEY (id)
@@ -111,17 +98,17 @@ ALTER TABLE dish_category
     ADD CONSTRAINT fk_discat_on_category FOREIGN KEY (category_id) REFERENCES category (id);
 
 ALTER TABLE dish_category
-    ADD CONSTRAINT fk_discat_on_dish FOREIGN KEY (dish_id) REFERENCES dish (id)
+    ADD CONSTRAINT fk_discat_on_dish FOREIGN KEY (dish_id) REFERENCES dish (id);
 
 CREATE SEQUENCE IF NOT EXISTS dish_image_sequence START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE dish_image
 (
     id         BIGINT NOT NULL,
-    created    TIMESTAMP WITH TIME ZONE,
     created_by VARCHAR(255),
-    updated    TIMESTAMP WITH TIME ZONE,
+    created    TIMESTAMP WITH TIME ZONE,
     updated_by VARCHAR(255),
+    updated    TIMESTAMP WITH TIME ZONE,
     name       VARCHAR(255),
     file_path  VARCHAR(255),
     dish_id    BIGINT,
@@ -130,6 +117,23 @@ CREATE TABLE dish_image
 
 ALTER TABLE dish_image
     ADD CONSTRAINT FK_DISH_IMAGE_ON_DISH FOREIGN KEY (dish_id) REFERENCES dish (id);
+
+CREATE SEQUENCE IF NOT EXISTS dish_portion_sequence START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE dish_portion
+(
+    id         BIGINT NOT NULL,
+    price      DOUBLE PRECISION,
+    dish_id    BIGINT,
+    portion_id BIGINT,
+    CONSTRAINT pk_dish_portion PRIMARY KEY (id)
+);
+
+ALTER TABLE dish_portion
+    ADD CONSTRAINT FK_DISH_PORTION_ON_DISH FOREIGN KEY (dish_id) REFERENCES dish (id);
+
+ALTER TABLE dish_portion
+    ADD CONSTRAINT FK_DISH_PORTION_ON_PORTION FOREIGN KEY (portion_id) REFERENCES portion (id);
 
 CREATE SEQUENCE IF NOT EXISTS employee_sequence START WITH 1 INCREMENT BY 1;
 
@@ -146,6 +150,23 @@ CREATE TABLE employee
     CONSTRAINT pk_employee PRIMARY KEY (id)
 );
 
+CREATE SEQUENCE IF NOT EXISTS food_order_sequence START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE food_order
+(
+    id          BIGINT NOT NULL,
+    notes       VARCHAR(255),
+    quantity    INTEGER,
+    status      SMALLINT,
+    total       DOUBLE PRECISION,
+    customer_id BIGINT,
+    date        TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT pk_food_order PRIMARY KEY (id)
+);
+
+ALTER TABLE food_order
+    ADD CONSTRAINT FK_FOOD_ORDER_ON_CUSTOMER FOREIGN KEY (customer_id) REFERENCES customer (id);
+
 CREATE TABLE order_dish
 (
     dish_id  BIGINT NOT NULL,
@@ -157,7 +178,7 @@ ALTER TABLE order_dish
     ADD CONSTRAINT fk_orddis_on_dish FOREIGN KEY (dish_id) REFERENCES dish (id);
 
 ALTER TABLE order_dish
-    ADD CONSTRAINT fk_orddis_on_order FOREIGN KEY (order_id) REFERENCES "order" (id);
+    ADD CONSTRAINT fk_orddis_on_food_order FOREIGN KEY (order_id) REFERENCES food_order (id);
 
 CREATE TABLE order_portion
 (
@@ -167,7 +188,7 @@ CREATE TABLE order_portion
 );
 
 ALTER TABLE order_portion
-    ADD CONSTRAINT fk_ordpor_on_order FOREIGN KEY (order_id) REFERENCES "order" (id);
+    ADD CONSTRAINT fk_ordpor_on_food_order FOREIGN KEY (order_id) REFERENCES food_order (id);
 
 ALTER TABLE order_portion
     ADD CONSTRAINT fk_ordpor_on_portion FOREIGN KEY (portion_id) REFERENCES portion (id);
@@ -177,10 +198,10 @@ CREATE SEQUENCE IF NOT EXISTS portion_sequence START WITH 1 INCREMENT BY 1;
 CREATE TABLE portion
 (
     id         BIGINT NOT NULL,
-    created    TIMESTAMP WITH TIME ZONE,
     created_by VARCHAR(255),
-    updated    TIMESTAMP WITH TIME ZONE,
+    created    TIMESTAMP WITH TIME ZONE,
     updated_by VARCHAR(255),
+    updated    TIMESTAMP WITH TIME ZONE,
     name       VARCHAR(255),
     CONSTRAINT pk_portion PRIMARY KEY (id)
 );
@@ -206,36 +227,15 @@ ALTER TABLE review
 ALTER TABLE review
     ADD CONSTRAINT FK_REVIEW_ON_DISH FOREIGN KEY (dish_id) REFERENCES dish (id);
 
-CREATE SEQUENCE IF NOT EXISTS dish_portion_sequence START WITH 1 INCREMENT BY 1;
-
-CREATE TABLE dish_portion
+CREATE TABLE dish_portion_cart
 (
-    id         BIGINT NOT NULL,
-    price      DOUBLE PRECISION,
-    dish_id    BIGINT,
-    portion_id BIGINT,
-    CONSTRAINT pk_dish_portion PRIMARY KEY (id)
+    cart_id         BIGINT NOT NULL,
+    dish_portion_id BIGINT NOT NULL,
+    CONSTRAINT pk_dish_portion_cart PRIMARY KEY (cart_id, dish_portion_id)
 );
 
-ALTER TABLE dish_portion
-    ADD CONSTRAINT FK_DISH_PORTION_ON_DISH FOREIGN KEY (dish_id) REFERENCES dish (id);
+ALTER TABLE dish_portion_cart
+    ADD CONSTRAINT fk_disporcar_on_cart FOREIGN KEY (cart_id) REFERENCES cart (id);
 
-ALTER TABLE dish_portion
-    ADD CONSTRAINT FK_DISH_PORTION_ON_PORTION FOREIGN KEY (portion_id) REFERENCES portion (id);
-
-CREATE SEQUENCE IF NOT EXISTS food_order_sequence START WITH 1 INCREMENT BY 1;
-
-CREATE TABLE food_order
-(
-    id          BIGINT NOT NULL,
-    notes       VARCHAR(255),
-    quantity    INTEGER,
-    status      SMALLINT,
-    total       DOUBLE PRECISION,
-    customer_id BIGINT,
-    date        TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT pk_food_order PRIMARY KEY (id)
-);
-
-ALTER TABLE food_order
-    ADD CONSTRAINT FK_FOOD_ORDER_ON_CUSTOMER FOREIGN KEY (customer_id) REFERENCES customer (id);
+ALTER TABLE dish_portion_cart
+    ADD CONSTRAINT fk_disporcar_on_dish_portion FOREIGN KEY (dish_portion_id) REFERENCES dish_portion (id);
