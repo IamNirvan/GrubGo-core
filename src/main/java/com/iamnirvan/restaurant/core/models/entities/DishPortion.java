@@ -33,4 +33,6 @@ public class DishPortion {
     @OneToMany(mappedBy = "dishPortion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<DishPortionCart> dishPortionCarts;
+    @ManyToMany(mappedBy = "dishPortions", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    private Set<FoodOrder> foodOrders;
 }

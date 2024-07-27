@@ -28,21 +28,28 @@ public class FoodOrder {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private Customer customer;
-    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    @JoinTable(
-            name = "order_portion",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "portion_id")
-    )
-    private Set<Portion> portions;
+//    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    @JoinTable(
+//            name = "order_portion",
+//            joinColumns = @JoinColumn(name = "order_id"),
+//            inverseJoinColumns = @JoinColumn(name = "portion_id")
+//    )
+//    private Set<Portion> portions;
 
     @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(
-            name = "order_dish",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "dish_id")
+            name = "food_orders_dish_portions",
+            joinColumns = @JoinColumn(name = "food_order_id"),
+            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
     )
-    private Set<Dish> dishes;
+    private Set<DishPortion> dishPortions;
+//    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    @JoinTable(
+//            name = "order_dish",
+//            joinColumns = @JoinColumn(name = "order_id"),
+//            inverseJoinColumns = @JoinColumn(name = "dish_id")
+//    )
+//    private Set<Dish> dishes;
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE", updatable = false)
     private Instant date;
 }

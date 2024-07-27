@@ -135,6 +135,21 @@ ALTER TABLE dish_portion
 ALTER TABLE dish_portion
     ADD CONSTRAINT FK_DISH_PORTION_ON_PORTION FOREIGN KEY (portion_id) REFERENCES portion (id);
 
+CREATE TABLE dish_portion_cart
+(
+    id              BIGINT NOT NULL,
+    quantity        INTEGER,
+    cart_id         BIGINT,
+    dish_portion_id BIGINT,
+    CONSTRAINT pk_dish_portion_cart PRIMARY KEY (id)
+);
+
+ALTER TABLE dish_portion_cart
+    ADD CONSTRAINT FK_DISH_PORTION_CART_ON_CART FOREIGN KEY (cart_id) REFERENCES cart (id);
+
+ALTER TABLE dish_portion_cart
+    ADD CONSTRAINT FK_DISH_PORTION_CART_ON_DISH_PORTION FOREIGN KEY (dish_portion_id) REFERENCES dish_portion (id);
+
 CREATE SEQUENCE IF NOT EXISTS employee_sequence START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE employee
@@ -167,31 +182,18 @@ CREATE TABLE food_order
 ALTER TABLE food_order
     ADD CONSTRAINT FK_FOOD_ORDER_ON_CUSTOMER FOREIGN KEY (customer_id) REFERENCES customer (id);
 
-CREATE TABLE order_dish
+CREATE TABLE food_orders_dish_portions
 (
-    dish_id  BIGINT NOT NULL,
-    order_id BIGINT NOT NULL,
-    CONSTRAINT pk_order_dish PRIMARY KEY (dish_id, order_id)
+    dish_portion_id BIGINT NOT NULL,
+    food_order_id   BIGINT NOT NULL,
+    CONSTRAINT pk_food_orders_dish_portions PRIMARY KEY (dish_portion_id, food_order_id)
 );
 
-ALTER TABLE order_dish
-    ADD CONSTRAINT fk_orddis_on_dish FOREIGN KEY (dish_id) REFERENCES dish (id);
+ALTER TABLE food_orders_dish_portions
+    ADD CONSTRAINT fk_fooorddispor_on_dish_portion FOREIGN KEY (dish_portion_id) REFERENCES dish_portion (id);
 
-ALTER TABLE order_dish
-    ADD CONSTRAINT fk_orddis_on_food_order FOREIGN KEY (order_id) REFERENCES food_order (id);
-
-CREATE TABLE order_portion
-(
-    order_id   BIGINT NOT NULL,
-    portion_id BIGINT NOT NULL,
-    CONSTRAINT pk_order_portion PRIMARY KEY (order_id, portion_id)
-);
-
-ALTER TABLE order_portion
-    ADD CONSTRAINT fk_ordpor_on_food_order FOREIGN KEY (order_id) REFERENCES food_order (id);
-
-ALTER TABLE order_portion
-    ADD CONSTRAINT fk_ordpor_on_portion FOREIGN KEY (portion_id) REFERENCES portion (id);
+ALTER TABLE food_orders_dish_portions
+    ADD CONSTRAINT fk_fooorddispor_on_food_order FOREIGN KEY (food_order_id) REFERENCES food_order (id);
 
 CREATE SEQUENCE IF NOT EXISTS portion_sequence START WITH 1 INCREMENT BY 1;
 
@@ -226,16 +228,3 @@ ALTER TABLE review
 
 ALTER TABLE review
     ADD CONSTRAINT FK_REVIEW_ON_DISH FOREIGN KEY (dish_id) REFERENCES dish (id);
-
-CREATE TABLE dish_portion_cart
-(
-    cart_id         BIGINT NOT NULL,
-    dish_portion_id BIGINT NOT NULL,
-    CONSTRAINT pk_dish_portion_cart PRIMARY KEY (cart_id, dish_portion_id)
-);
-
-ALTER TABLE dish_portion_cart
-    ADD CONSTRAINT fk_disporcar_on_cart FOREIGN KEY (cart_id) REFERENCES cart (id);
-
-ALTER TABLE dish_portion_cart
-    ADD CONSTRAINT fk_disporcar_on_dish_portion FOREIGN KEY (dish_portion_id) REFERENCES dish_portion (id);

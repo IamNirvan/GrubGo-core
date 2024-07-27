@@ -34,6 +34,6 @@ public class Dish extends DateTimeWithUser {
     private Set<DishPortion> dishPortions;
     @ManyToMany(mappedBy = "dishes", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private Set<Category> categories;
-    @ManyToMany(mappedBy = "dishes", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    private Set<FoodOrder> foodOrders;
+//    @ManyToMany(mappedBy = "dishes", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    private Set<FoodOrder> foodOrders;
 }

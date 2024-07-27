@@ -26,6 +26,6 @@ public class Portion extends DateTimeWithUser {
     @OneToMany(mappedBy = "portion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<DishPortion> dishPortions;
-    @ManyToMany(mappedBy = "portions", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    private Set<FoodOrder> foodOrders;
+//    @ManyToMany(mappedBy = "portions", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    private Set<FoodOrder> foodOrders;
 }
