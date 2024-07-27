@@ -3,12 +3,9 @@ package com.iamnirvan.restaurant.core.models.entities;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.iamnirvan.restaurant.core.enums.EStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 
 @Table(name = "food_order")
 @Entity
@@ -16,13 +13,15 @@ import java.time.Instant;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @SequenceGenerator(name = "food_order_sequence", sequenceName = "food_order_sequence", allocationSize = 1)
 public class FoodOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "food_order_sequence")
     private Long id;
     private String notes;
-    private Integer quantity;
+//    private Integer quantity;
+    @Enumerated(EnumType.STRING)
     private EStatus status;
     private Double total;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,5 +55,5 @@ public class FoodOrder {
     private Cart cart;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE", updatable = false)
-    private Instant date;
+    private OffsetDateTime date;
 }

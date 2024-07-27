@@ -28,8 +28,8 @@ public class DishPortion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference
     private Portion portion;
-    @ManyToMany(mappedBy = "dishPortions", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    private Set<Cart> carts;
+//    @ManyToMany(mappedBy = "dishPortions", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    private Set<Cart> carts;
     @OneToMany(mappedBy = "dishPortion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<DishPortionCart> dishPortionCarts;

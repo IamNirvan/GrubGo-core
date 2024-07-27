@@ -27,16 +27,18 @@ public class Cart {
     @JoinColumn(name = "customer_id", referencedColumnName = "id")
     @JsonBackReference
     private Customer customer;
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "dish_portion_cart",
-            joinColumns = @JoinColumn(name = "cart_id"),
-            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
-    )
-    private Set<DishPortion> dishPortions;
+//    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+//    @JoinTable(
+//            name = "dish_portion_cart",
+//            joinColumns = @JoinColumn(name = "cart_id"),
+//            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
+//    )
+//    private Set<DishPortion> dishPortions;
+
     @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<DishPortionCart> dishPortionCarts;
+
     @OneToOne(mappedBy = "cart", fetch = FetchType.EAGER)
     @JsonManagedReference
     private FoodOrder foodOrder;

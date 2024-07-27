@@ -122,11 +122,13 @@ public class CartService implements ICartService {
         if (id != null) {
             Cart cart = cartRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException(String.format("Cart with id %s does not exist", id)));
-            for (DishPortion dishPortion : cart.getDishPortions()) {
+
+            for (DishPortionCart dishPortionCart : cart.getDishPortionCarts()) {
                 dishes.add(DishPortionGetResponse.builder()
-                        .dishName(dishPortion.getDish().getName())
-                        .portionName(dishPortion.getPortion().getName())
-                        .price(dishPortion.getPrice())
+                        .dishName(dishPortionCart.getDishPortion().getDish().getName())
+                        .portionName(dishPortionCart.getDishPortion().getPortion().getName())
+                        .price(dishPortionCart.getDishPortion().getPrice())
+                        .quantity(dishPortionCart.getQuantity())
                         .build());
             }
            return GetCartResponse.builder()
@@ -135,11 +137,12 @@ public class CartService implements ICartService {
                     .build();
         } else {
             for (Cart cart : cartRepository.findAll()) {
-                for (DishPortion dishPortion : cart.getDishPortions()) {
+                for (DishPortionCart dishPortionCart : cart.getDishPortionCarts()) {
                     dishes.add(DishPortionGetResponse.builder()
-                            .dishName(dishPortion.getDish().getName())
-                            .portionName(dishPortion.getPortion().getName())
-                            .price(dishPortion.getPrice())
+                            .dishName(dishPortionCart.getDishPortion().getDish().getName())
+                            .portionName(dishPortionCart.getDishPortion().getPortion().getName())
+                            .price(dishPortionCart.getDishPortion().getPrice())
+                            .quantity(dishPortionCart.getQuantity())
                             .build());
                 }
                 return GetCartResponse.builder()
