@@ -1,10 +1,9 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Set;
 
@@ -14,6 +13,7 @@ import java.util.Set;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @SequenceGenerator(name = "cart_sequence", sequenceName = "cart_sequence", allocationSize = 1)
 public class Cart {
     @Id
@@ -21,12 +21,16 @@ public class Cart {
     private Long id;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", referencedColumnName = "id")
+    @JsonBackReference
     private Customer customer;
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinTable(
-            name = "cart_dish",
+            name = "dish_portion_cart",
             joinColumns = @JoinColumn(name = "cart_id"),
-            inverseJoinColumns = @JoinColumn(name = "dish_id")
+            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
     )
-    private Set<Dish> dishes;
+    private Set<DishPortion> dishPortions;
+    @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private Set<DishPortionCart> dishPortionCarts;
 }
