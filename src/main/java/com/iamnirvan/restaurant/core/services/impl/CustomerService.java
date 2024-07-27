@@ -3,6 +3,7 @@ package com.iamnirvan.restaurant.core.services.impl;
 import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.entities.Address;
+import com.iamnirvan.restaurant.core.models.entities.Cart;
 import com.iamnirvan.restaurant.core.models.entities.Customer;
 import com.iamnirvan.restaurant.core.models.entities.CustomerAllergen;
 import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequest;
@@ -12,6 +13,7 @@ import com.iamnirvan.restaurant.core.models.requests.customer_allergen.CustomerA
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerUpdateResponse;
+import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
 import com.iamnirvan.restaurant.core.services.ICustomerService;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +31,9 @@ import java.util.Set;
 @Log4j2
 public class CustomerService implements ICustomerService {
     private final CustomerRepository customerRepository;
+    private final CartRepository cartRepository;
 
-    @Override
+   @Override
     public CustomerCreateResponse createCustomer(CustomerCreateRequest request) {
         if (customerRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Username already exists");
@@ -93,6 +96,13 @@ public class CustomerService implements ICustomerService {
         }
 
         customerRepository.save(customer);
+
+        // Create a default cart for the customer
+        Cart cart = Cart.builder()
+                .customer(customer)
+                .build();
+        cartRepository.save(cart);
+
         log.debug(String.format("Customer created: %s", customer));
 
         return CustomerCreateResponse.builder()

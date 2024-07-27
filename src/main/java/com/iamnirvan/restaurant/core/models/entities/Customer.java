@@ -33,6 +33,7 @@ public class Customer extends DateTimeWithoutUser {
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Review> reviews;
     @OneToOne(mappedBy = "customer", fetch = FetchType.EAGER)
+    @JsonManagedReference
     private Cart cart;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<FoodOrder> foodOrders;
