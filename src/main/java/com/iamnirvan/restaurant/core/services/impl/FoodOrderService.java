@@ -45,7 +45,7 @@ public class FoodOrderService implements IFoodOrderService {
                     .notes(request.getNotes())
                     .status(EStatus.IN_PROGRESS)
                     .total(total)
-                    .customer(cart.getCustomer())
+//                    .customer(cart.getCustomer())
                     .date(OffsetDateTime.now())
                     .cart(cart)
                     .build();

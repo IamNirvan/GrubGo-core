@@ -1,6 +1,5 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +9,9 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
+/**
+ * This represents a specific portion size (small, medium, etc.) of a dish. It is linked with the associative entity
+ * */
 @Table(name = "portion")
 @Entity
 @Getter
@@ -22,10 +24,8 @@ public class Portion extends DateTimeWithUser {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "portion_sequence")
     private Long id;
+    @Column(unique = true)
     private String name;
     @OneToMany(mappedBy = "portion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
     private Set<DishPortion> dishPortions;
-//    @ManyToMany(mappedBy = "portions", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-//    private Set<FoodOrder> foodOrders;
 }

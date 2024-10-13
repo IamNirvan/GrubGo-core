@@ -1,7 +1,6 @@
 package com.iamnirvan.restaurant.core.models.requests.customer;
 
-import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequest;
-import com.iamnirvan.restaurant.core.models.requests.customer_allergen.CustomerAllergenCreateRequest;
+import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequestWithoutCustomer;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
@@ -23,6 +22,6 @@ public class CustomerCreateRequest {
     private String firstName;
     @NotBlank(message = "last name is required")
     private String lastName;
-    private List<CustomerAllergenCreateRequest> allergens;
-    private List<AddressCreateRequest> addresses;
+    private List<String> allergens;
+    private List<AddressCreateRequestWithoutCustomer> addresses;
 }

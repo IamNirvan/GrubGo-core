@@ -7,12 +7,12 @@ import com.iamnirvan.restaurant.core.models.entities.Address;
 import com.iamnirvan.restaurant.core.models.entities.Cart;
 import com.iamnirvan.restaurant.core.models.entities.Customer;
 import com.iamnirvan.restaurant.core.models.entities.CustomerAllergen;
-import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequest;
+import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequestWithoutCustomer;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerUpdateRequest;
-import com.iamnirvan.restaurant.core.models.requests.customer_allergen.CustomerAllergenCreateRequest;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerDeleteResponse;
+import com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerUpdateResponse;
 import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
@@ -34,43 +34,18 @@ public class CustomerService implements ICustomerService {
     private final CustomerRepository customerRepository;
     private final CartRepository cartRepository;
 
-   @Override
-    public CustomerCreateResponse createCustomer(CustomerCreateRequest request) {
+    /**
+     * Registers a new customer.
+     *
+     * @param request the customer creation request containing the details of the new customer
+     * @return a response containing the details of the created customer
+     * @throws BadRequestException if a customer with the given username already exists
+     */
+    @Override
+    @Transactional
+    public CustomerCreateResponse registerCustomer(CustomerCreateRequest request) {
         if (customerRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Username already exists");
-        }
-
-        // Handle customer allergen details
-        Set<CustomerAllergen> allergens = null;
-        if (request.getAllergens() != null && !request.getAllergens().isEmpty()) {
-            allergens = new HashSet<>(request.getAllergens().size());
-            for (CustomerAllergenCreateRequest allergen : request.getAllergens()) {
-                allergens.add(
-                        CustomerAllergen.builder()
-                                .name(allergen.getName())
-                                .created(OffsetDateTime.now())
-                                .build()
-                );
-            }
-            log.debug("handled customer allergens");
-        }
-
-        // Handle address details
-        Set<Address> addresses = null;
-        if (request.getAddresses() != null && !request.getAddresses().isEmpty()) {
-            addresses = new HashSet<>(request.getAddresses().size());
-            for (AddressCreateRequest address : request.getAddresses()) {
-                addresses.add(
-                        Address.builder()
-                                .street(address.getStreet())
-                                .city(address.getCity())
-                                .province(address.getProvince())
-                                .buildingNumber(address.getBuildingNumber())
-                                .created(OffsetDateTime.now())
-                                .build()
-                );
-            }
-            log.debug("handled customer addresses");
         }
 
         Customer customer = Customer.builder()
@@ -79,24 +54,59 @@ public class CustomerService implements ICustomerService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .created(OffsetDateTime.now())
-                .allergens(allergens)
-                .addresses(addresses)
                 .build();
 
-        // Set foreign key to associated entities
-        if (allergens != null) {
-            for (CustomerAllergen allergen : allergens) {
-                allergen.setCustomer(customer);
-            }
-        }
-
-        if (addresses != null) {
-            for (Address address : addresses) {
-                address.setCustomer(customer);
-            }
-        }
-
         customerRepository.save(customer);
+
+
+        // Handle the allergens
+       Set<CustomerAllergen> allergens = null;
+       if (request.getAllergens() != null && !request.getAllergens().isEmpty()) {
+           allergens = new HashSet<>(request.getAllergens().size());
+
+           for (String allergen : request.getAllergens()) {
+               allergens.add(
+                       CustomerAllergen.builder()
+                               .name(allergen)
+                               .customer(customer)
+                               .created(OffsetDateTime.now())
+                               .build()
+               );
+           }
+           log.debug("handled customer allergens");
+       }
+
+       // Handle the addresses
+       Set<Address> addresses = null;
+       if (request.getAddresses() != null && !request.getAddresses().isEmpty()) {
+           addresses = new HashSet<>(request.getAddresses().size());
+           boolean alreadyHaveMainAddress = false;
+
+           for (AddressCreateRequestWithoutCustomer address : request.getAddresses()) {
+               if (!alreadyHaveMainAddress && address.isMain()) {
+                   alreadyHaveMainAddress = true;
+               } else if (alreadyHaveMainAddress && address.isMain()) {
+                   throw new BadRequestException("Only one address can be marked as main");
+               }
+
+               addresses.add(
+                       Address.builder()
+                               .street(address.getStreet())
+                               .city(address.getCity())
+                               .province(address.getProvince())
+                               .buildingNumber(address.getBuildingNumber())
+                               .isMain(address.isMain())
+                               .customer(customer)
+                               .created(OffsetDateTime.now())
+                               .build()
+               );
+           }
+           log.debug("handled customer addresses");
+       }
+
+       customer.setAllergens(allergens);
+       customer.setAddresses(addresses);
+       customerRepository.save(customer);
 
         // Create a default cart for the customer
         Cart cart = Cart.builder()
@@ -114,6 +124,15 @@ public class CustomerService implements ICustomerService {
                 .build();
     }
 
+    /**
+     * Updates an existing customer.
+     *
+     * @param id the ID of the customer to update
+     * @param request the customer update request containing the new details of the customer
+     * @return a response containing the updated details of the customer
+     * @throws NotFoundException if the customer with the given ID does not exist
+     * @throws BadRequestException if the first name or last name is empty
+     */
     @Override
     @Transactional
     public CustomerUpdateResponse updateCustomer(Long id, CustomerUpdateRequest request) {
@@ -150,6 +169,13 @@ public class CustomerService implements ICustomerService {
                 .build();
     }
 
+    /**
+     * Deletes an existing customer.
+     *
+     * @param id the ID of the customer to delete
+     * @return a response containing the details of the deleted customer
+     * @throws NotFoundException if the customer with the given ID does not exist
+     */
     @Override
     public CustomerDeleteResponse deleteCustomer(Long id) {
         Customer employee = customerRepository.findById(id).orElseThrow(() ->
@@ -165,13 +191,20 @@ public class CustomerService implements ICustomerService {
                 .build();
     }
 
+    /**
+     * Retrieves customers.
+     *
+     * @param id the ID of the customer to retrieve (optional)
+     * @return a list of customer responses
+     * @throws NotFoundException if the customer with the given ID does not exist
+     */
     @Override
-    public List<Customer> getCustomers(Long id) {
+    public List<CustomerGetResponse> getCustomers(Long id) {
         if (id != null) {
-            Customer customer = customerRepository.findById(id).orElseThrow(() ->
-                    new NotFoundException((String.format("Customer with id %s does not exist", id))));
+            CustomerGetResponse customer = customerRepository.findCustomerById(id).orElseThrow(() ->
+                    new NotFoundException(String.format("Customer with id %s does not exist", id)));
             return List.of(customer);
         }
-        return customerRepository.findAll();
+        return customerRepository.findAllCustomers();
     }
 }

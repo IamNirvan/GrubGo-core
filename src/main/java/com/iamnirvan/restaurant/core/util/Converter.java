@@ -18,7 +18,7 @@ public class Converter {
                     .id(dish.getId())
                     .name(dish.getName())
                     .description(dish.getDescription())
-                    .images(dish.getImages())
+//                    .images(dish.getImages())
                     .build());
         }
         return result;

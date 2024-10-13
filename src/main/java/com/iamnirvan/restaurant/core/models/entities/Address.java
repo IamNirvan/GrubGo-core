@@ -1,10 +1,12 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * Represents a delivery location of a customer
+ * */
 @Table(name = "address")
 @Entity
 @Getter
@@ -22,9 +24,9 @@ public class Address extends DateTimeWithoutUser {
     private String city;
     private String province;
     private String buildingNumber;
+    private boolean isMain;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
-    @JsonBackReference
     @ToString.Exclude
     private Customer customer;
 }

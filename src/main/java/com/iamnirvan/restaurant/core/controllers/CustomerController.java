@@ -22,7 +22,7 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<?> createCustomer(@Valid @RequestBody CustomerCreateRequest request) {
-        return ResponseEntity.ok(customerService.createCustomer(request));
+        return ResponseEntity.ok(customerService.registerCustomer(request));
     }
 
     @PutMapping("/{id}")

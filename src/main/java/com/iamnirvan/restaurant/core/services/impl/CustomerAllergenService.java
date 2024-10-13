@@ -8,6 +8,7 @@ import com.iamnirvan.restaurant.core.models.requests.customer_allergen.CustomerA
 import com.iamnirvan.restaurant.core.models.requests.customer_allergen.CustomerAllergenUpdateRequest;
 import com.iamnirvan.restaurant.core.models.responses.customer_allergen.CustomerAllergenCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer_allergen.CustomerAllergenDeleteResponse;
+import com.iamnirvan.restaurant.core.models.responses.customer_allergen.CustomerAllergenGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer_allergen.CustomerAllergenUpdateResponse;
 import com.iamnirvan.restaurant.core.repositories.CustomerAllergenRepository;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
@@ -104,17 +105,20 @@ public class CustomerAllergenService implements ICustomerAllergenService {
     }
 
     @Override
-    public List<CustomerAllergen> getAllergens(Long id, Long customerId) {
+    public List<CustomerAllergenGetResponse> getAllergens(Long id, Long customerId) {
         if (id != null) {
-            CustomerAllergen address = allergenRepository.findById(id).orElseThrow(() ->
-                    new NotFoundException((String.format("Allergen with id %s does not exist", id))));
-            return List.of(address);
-        } else if (customerId != null) {
+            CustomerAllergenGetResponse allergen = allergenRepository.findCustomerAllergenById(id).orElseThrow(
+                    () -> new NotFoundException(String.format("Allergen with id %s does not exist", id))
+            );
+            return List.of(allergen);
+        }
+
+        if (customerId != null) {
             if (customerRepository.findById(customerId).isEmpty()) {
                 throw new NotFoundException(String.format("Customer with id %s does not exist", customerId));
             }
             return allergenRepository.findCustomerAllergenByCustomerId(customerId);
         }
-        return allergenRepository.findAll();
+        return null;
     }
 }

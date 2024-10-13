@@ -97,7 +97,7 @@ public class DishService implements IDishService {
             }
 
             dish.setDishPortions(dishPortions);
-            dish.setCategories(categories);
+//            dish.setCategories(categories);
             dishRepository.save(dish);
             log.debug(String.format("Dish created: %s", dish));
 
@@ -223,7 +223,7 @@ public class DishService implements IDishService {
                     .id(dish.getId())
                     .name(dish.getName())
                     .description(dish.getDescription())
-                    .images(dish.getImages())
+//                    .images(dish.getImages())
                     .reviews(dish.getReviews())
                     .dishPortions(dish.getDishPortions())
                     .created(dish.getCreated())
@@ -237,7 +237,7 @@ public class DishService implements IDishService {
                         .id(dish.getId())
                         .name(dish.getName())
                         .description(dish.getDescription())
-                        .images(dish.getImages())
+//                        .images(dish.getImages())
                         .reviews(dish.getReviews())
                         .dishPortions(dish.getDishPortions())
                         .created(dish.getCreated())

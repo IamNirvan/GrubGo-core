@@ -1,11 +1,12 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
-// Many-to-many association between dish and portion entity...
-
+/**
+ * Represents the associative entity between the dish portion (small burger) and a cart. It also contains the
+ * desires quantity of the dish portion.
+ * */
 @Table(name = "dish_portion_cart")
 @Entity
 @Getter
@@ -20,10 +21,7 @@ public class DishPortionCart {
     private Long id;
     private Integer quantity;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference
     private Cart cart;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference
     private DishPortion dishPortion;
-
 }

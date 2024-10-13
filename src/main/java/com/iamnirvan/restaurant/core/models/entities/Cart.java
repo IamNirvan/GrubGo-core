@@ -1,13 +1,15 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.iamnirvan.restaurant.core.enums.EActiveStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Set;
 
+/**
+ * Represents a cart. A cart has a customer. Additionally, a cart can have multiple dish portions (small pizza, etc.)
+ * A cart contains all the desired food portions and is linked with an order. A cart can only have 1 order.
+ * */
 @Table(name = "cart")
 @Entity
 @Getter
@@ -22,24 +24,11 @@ public class Cart {
     private Long id;
     @Enumerated(EnumType.STRING)
     private EActiveStatus status;
-//    @OneToOne(fetch = FetchType.LAZY)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", referencedColumnName = "id")
-    @JsonBackReference
     private Customer customer;
-//    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-//    @JoinTable(
-//            name = "dish_portion_cart",
-//            joinColumns = @JoinColumn(name = "cart_id"),
-//            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
-//    )
-//    private Set<DishPortion> dishPortions;
-
     @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
     private Set<DishPortionCart> dishPortionCarts;
-
     @OneToOne(mappedBy = "cart", fetch = FetchType.EAGER)
-    @JsonManagedReference
     private FoodOrder foodOrder;
 }

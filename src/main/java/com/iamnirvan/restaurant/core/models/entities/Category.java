@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
+@Deprecated
 @Table(name = "category")
 @Entity
 @Getter

@@ -7,6 +7,10 @@ import lombok.*;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Links an order instance with a cart that contains all the food portions the customer wanted. This entity
+ * is also linked with a customer directly (although the customer is indirectly linked via the cart already...)
+ * */
 @Table(name = "food_order")
 @Entity
 @Getter
@@ -20,40 +24,13 @@ public class FoodOrder {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "food_order_sequence")
     private Long id;
     private String notes;
-//    private Integer quantity;
     @Enumerated(EnumType.STRING)
     private EStatus status;
     private Double total;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
-//    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-//    @JoinTable(
-//            name = "order_portion",
-//            joinColumns = @JoinColumn(name = "order_id"),
-//            inverseJoinColumns = @JoinColumn(name = "portion_id")
-//    )
-//    private Set<Portion> portions;
-
-//    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-//    @JoinTable(
-//            name = "food_orders_dish_portions",
-//            joinColumns = @JoinColumn(name = "food_order_id"),
-//            inverseJoinColumns = @JoinColumn(name = "dish_portion_id")
-//    )
-//    private Set<DishPortion> dishPortions;
-//    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-//    @JoinTable(
-//            name = "order_dish",
-//            joinColumns = @JoinColumn(name = "order_id"),
-//            inverseJoinColumns = @JoinColumn(name = "dish_id")
-//    )
-//    private Set<Dish> dishes;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", referencedColumnName = "id")
     @JsonBackReference
     private Cart cart;
-
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE", updatable = false)
     private OffsetDateTime date;
 }
