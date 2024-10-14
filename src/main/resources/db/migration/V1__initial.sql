@@ -12,21 +12,6 @@ CREATE TABLE customer
     CONSTRAINT pk_customer PRIMARY KEY (id)
 );
 
-CREATE SEQUENCE IF NOT EXISTS dish_sequence START WITH 1 INCREMENT BY 1;
-
-CREATE TABLE dish
-(
-    id          BIGINT NOT NULL,
-    created_by  VARCHAR(255),
-    created     TIMESTAMP WITH TIME ZONE,
-    updated_by  VARCHAR(255),
-    updated     TIMESTAMP WITH TIME ZONE,
-    name        VARCHAR(255),
-    description VARCHAR(255),
-    image       BYTEA,
-    CONSTRAINT pk_dish PRIMARY KEY (id)
-);
-
 CREATE SEQUENCE IF NOT EXISTS customer_allergen_sequence START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE customer_allergen
@@ -41,8 +26,6 @@ CREATE TABLE customer_allergen
 
 ALTER TABLE customer_allergen
     ADD CONSTRAINT FK_CUSTOMER_ALLERGEN_ON_CUSTOMER FOREIGN KEY (customer_id) REFERENCES customer (id);
-
-CREATE SEQUENCE IF NOT EXISTS address_sequence START WITH 1 INCREMENT BY 1;
 
 CREATE SEQUENCE IF NOT EXISTS address_sequence START WITH 1 INCREMENT BY 1;
 
@@ -62,6 +45,19 @@ CREATE TABLE address
 
 ALTER TABLE address
     ADD CONSTRAINT FK_ADDRESS_ON_CUSTOMER FOREIGN KEY (customer_id) REFERENCES customer (id);
+
+CREATE SEQUENCE IF NOT EXISTS dish_sequence START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE dish
+(
+    id          BIGINT NOT NULL,
+    created     TIMESTAMP WITH TIME ZONE,
+    updated     TIMESTAMP WITH TIME ZONE,
+    name        VARCHAR(255),
+    description VARCHAR(255),
+    image       BYTEA,
+    CONSTRAINT pk_dish PRIMARY KEY (id)
+);
 
 CREATE SEQUENCE IF NOT EXISTS review_sequence START WITH 1 INCREMENT BY 1;
 
@@ -88,12 +84,10 @@ CREATE SEQUENCE IF NOT EXISTS portion_sequence START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE portion
 (
-    id         BIGINT NOT NULL,
-    created_by VARCHAR(255),
-    created    TIMESTAMP WITH TIME ZONE,
-    updated_by VARCHAR(255),
-    updated    TIMESTAMP WITH TIME ZONE,
-    name       VARCHAR(255),
+    id      BIGINT NOT NULL,
+    created TIMESTAMP WITH TIME ZONE,
+    updated TIMESTAMP WITH TIME ZONE,
+    name    VARCHAR(255),
     CONSTRAINT pk_portion PRIMARY KEY (id)
 );
 
@@ -170,13 +164,12 @@ CREATE SEQUENCE IF NOT EXISTS employee_sequence START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE employee
 (
-    id          BIGINT NOT NULL,
-    created     TIMESTAMP WITH TIME ZONE,
-    updated     TIMESTAMP WITH TIME ZONE,
-    first_name  VARCHAR(255),
-    last_name   VARCHAR(255),
-    designation SMALLINT,
-    username    VARCHAR(255),
-    password    VARCHAR(255),
+    id         BIGINT NOT NULL,
+    created    TIMESTAMP WITH TIME ZONE,
+    updated    TIMESTAMP WITH TIME ZONE,
+    first_name VARCHAR(255),
+    last_name  VARCHAR(255),
+    username   VARCHAR(255),
+    password   VARCHAR(255),
     CONSTRAINT pk_employee PRIMARY KEY (id)
 );
