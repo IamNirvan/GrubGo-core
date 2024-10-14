@@ -1,10 +1,7 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
@@ -28,9 +25,11 @@ public class Dish extends DateTimeWithoutUser {
     private String name;
     private String description;
     @OneToMany(mappedBy = "dish", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ToString.Exclude
     private Set<Review> reviews;
     @Column(name = "image", length = 1000)
     private byte[] image;
     @OneToMany(mappedBy = "dish", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private Set<DishPortion> dishPortions;
 }

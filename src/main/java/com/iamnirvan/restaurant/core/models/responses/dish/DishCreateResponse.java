@@ -1,9 +1,11 @@
 package com.iamnirvan.restaurant.core.models.responses.dish;
 
+import com.iamnirvan.restaurant.core.models.responses.dish_portion.DishPortionGetResponseWithoutDishName;
 import lombok.Builder;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -11,8 +13,7 @@ public class DishCreateResponse {
     private Long id;
     private String name;
     private String description;
-    private String createdBy;
+    private List<DishPortionGetResponseWithoutDishName> portions;
     private OffsetDateTime created;
-    private String updatedBy;
     private OffsetDateTime updated;
 }

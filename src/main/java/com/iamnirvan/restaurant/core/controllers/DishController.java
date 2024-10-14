@@ -1,6 +1,6 @@
 package com.iamnirvan.restaurant.core.controllers;
 
-import com.iamnirvan.restaurant.core.models.requests.dish.DishCreateRequest;
+import com.iamnirvan.restaurant.core.models.requests.dish.DishCreateRequestList;
 import com.iamnirvan.restaurant.core.models.requests.dish.DishUpdateRequest;
 import com.iamnirvan.restaurant.core.services.IDishService;
 import jakarta.validation.Valid;
@@ -24,11 +24,16 @@ public class DishController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createDish(@Valid @RequestBody List<DishCreateRequest> requests) {
-        return new ResponseEntity<>(dishService.createDish(requests), HttpStatus.CREATED);
+    public ResponseEntity<?> createDish(@ModelAttribute DishCreateRequestList request) {
+        return new ResponseEntity<>(dishService.createDish(request.getRequest()), HttpStatus.CREATED);
     }
 
-    @PutMapping
+//    @PostMapping
+//    public ResponseEntity<?> createDish(@Valid @RequestBody List<DishCreateRequest> requests) {
+//        return new ResponseEntity<>(dishService.createDish(requests), HttpStatus.CREATED);
+//    }
+//
+    @PatchMapping
     public ResponseEntity<?> updateCustomer(@Valid @RequestBody List<DishUpdateRequest> requests) {
         return new ResponseEntity<>(dishService.updateDish(requests), HttpStatus.OK);
     }

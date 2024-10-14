@@ -1,8 +1,8 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
 import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
+import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
-import com.iamnirvan.restaurant.core.models.entities.Category;
 import com.iamnirvan.restaurant.core.models.entities.Dish;
 import com.iamnirvan.restaurant.core.models.entities.DishPortion;
 import com.iamnirvan.restaurant.core.models.entities.Portion;
@@ -13,48 +13,70 @@ import com.iamnirvan.restaurant.core.models.responses.dish.DishCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishUpdateResponse;
-import com.iamnirvan.restaurant.core.repositories.CategoryRepository;
-import com.iamnirvan.restaurant.core.repositories.DishPortionRepository;
+import com.iamnirvan.restaurant.core.models.responses.dish_portion.DishPortionGetResponseWithoutDishName;
+import com.iamnirvan.restaurant.core.models.responses.review.ReviewGetResponseWithoutDishId;
 import com.iamnirvan.restaurant.core.repositories.DishRepository;
 import com.iamnirvan.restaurant.core.repositories.PortionRepository;
 import com.iamnirvan.restaurant.core.services.IDishService;
-import lombok.RequiredArgsConstructor;
+import com.iamnirvan.restaurant.core.util.Image.ImageUtil;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Log4j2
 public class DishService implements IDishService {
     private final DishRepository dishRepository;
     private final PortionRepository portionRepository;
-    private final DishPortionRepository dishPortionRepository;
-    private final CategoryRepository categoryRepository;
+    private static ImageUtil imageUtil;
+
+    @Autowired
+    public DishService(DishRepository dishRepository, PortionRepository portionRepository, ImageUtil imgUtil) {
+        this.dishRepository = dishRepository;
+        this.portionRepository = portionRepository;
+        imageUtil = imgUtil;
+    }
 
     /**
-     * Create multiple dish instances using a list of create requests. If contained in the request,
-     * dish portions can also be assigned to the dish along with their prices.
-     * @param requests list of create requests
-     * @return list of create responses
-     * @throws NotFoundException if portion with id does not exist
-     * */
+     * Creates new dishes based on the provided requests.
+     *
+     * @param requests the list of dish creation requests
+     * @return a list of responses containing the details of the created dishes
+     * @throws ConflictException if a dish with the given name already exists
+     * @throws NotFoundException if a portion with the given ID does not exist
+     */
     @Transactional
     @Override
     public List<DishCreateResponse> createDish(List<DishCreateRequest> requests) {
         final List<DishCreateResponse> result = new ArrayList<>();
 
         for (DishCreateRequest request : requests) {
-            if(dishRepository.existsByName(request.getName())) {
-                throw new BadRequestException(String.format("Dish with name %s already exists", request.getName()));
+            if (dishRepository.existsByName(request.getName())) {
+                throw new ConflictException(String.format("Dish with name %s already exists", request.getName()));
+            }
+
+            MultipartFile image = request.getImage();
+            byte[] compressedImage = null;
+            if (image != null) {
+                try {
+                    compressedImage = imageUtil.compressImage(image.getBytes());
+                } catch (IOException e) {
+                    log.error("Failed to compress image", e);
+                    throw new RuntimeException(e);
+                }
             }
 
             Dish dish = Dish.builder()
                     .name(request.getName())
                     .description(request.getDescription())
+                    .image(compressedImage)
                     .created(OffsetDateTime.now())
                     .build();
 
@@ -67,7 +89,7 @@ public class DishService implements IDishService {
 
                 // When assigning portions, ensure it is not repeated for each dish...
                 if (portionPersentMap.get(portion.getId()) != null && portionPersentMap.get(portion.getId())) {
-                    throw new BadRequestException(String.format("Portion with id %s is already assigned to dish", portion.getId()));
+                    throw new ConflictException(String.format("Portion with id %s is already assigned to dish", portion.getId()));
                 } else {
                     portionPersentMap.put(portion.getId(), true);
                 }
@@ -80,57 +102,23 @@ public class DishService implements IDishService {
             }
             log.debug("assigned dish portions to dish");
 
-            final Set<Category> categories = new HashSet<>();
-            Map<Long, Boolean> categoryPersentMap = new HashMap<>();
-            for (Long categoryId : request.getCategoryIds()) {
-                Category category = categoryRepository.findById(categoryId)
-                        .orElseThrow(() -> new NotFoundException(String.format("Category with id %s does not exist", categoryId)));
-
-                // When assigning categories, ensure it is not repeated for each dish...
-                if (categoryPersentMap.get(categoryId) != null && categoryPersentMap.get(categoryId)) {
-                    throw new BadRequestException(String.format("Category with id %s is already assigned to dish", categoryId));
-                } else {
-                    categoryPersentMap.put(categoryId, true);
-                }
-
-                categories.add(category);
-            }
-
             dish.setDishPortions(dishPortions);
-//            dish.setCategories(categories);
             dishRepository.save(dish);
             log.debug(String.format("Dish created: %s", dish));
 
-            // Save the dish on the category entity...
-            Set<Dish> categoryDishes;
-            for (Category category : categories) {
-                categoryDishes = category.getDishes();
-                categoryDishes.add(dish);
-                category.setDishes(categoryDishes);
-                categoryRepository.save(category);
-            }
-
-            result.add(DishCreateResponse.builder()
-                    .id(dish.getId())
-                    .name(dish.getName())
-                    .description(dish.getDescription())
-                    .created(dish.getCreated())
-//                    .createdBy(dish.getCreatedBy())
-                    .updated(dish.getUpdated())
-//                    .updatedBy(dish.getUpdatedBy())
-                    .build());
+            result.add(Parser.toDishCreateResponse(dish));
         }
         return result;
     }
 
     /**
-     * Update multiple dish instances using a list of update requests
-     * @param requests list of update requests
-     * @return list of update responses
-     * @throws BadRequestException if name is empty
-     * @throws BadRequestException if description is empty
-     * @throws NotFoundException if dish with id does not exist
-     * */
+     * Updates existing dishes based on the provided requests.
+     *
+     * @param requests the list of dish update requests
+     * @return a list of responses containing the updated details of the dishes
+     * @throws NotFoundException   if a dish with the given ID does not exist
+     * @throws BadRequestException if the name or description is empty or if a dish with the new name already exists
+     */
     @Transactional
     @Override
     public List<DishUpdateResponse> updateDish(List<DishUpdateRequest> requests) {
@@ -163,25 +151,18 @@ public class DishService implements IDishService {
             dishRepository.save(dish);
             log.debug(String.format("Dish updated: %s", dish));
 
-            result.add(DishUpdateResponse.builder()
-                    .id(dish.getId())
-                    .name(dish.getName())
-                    .description(dish.getDescription())
-                    .created(dish.getCreated())
-//                    .createdBy(dish.getCreatedBy())
-                    .updated(dish.getUpdated())
-//                    .updatedBy(dish.getUpdatedBy())
-                    .build());
+            result.add(Parser.toDishUpdateResponse(dish));
         }
         return result;
     }
 
     /**
-     * Delete multiple dish instances using a list of ids
-     * @param ids list of ids
-     * @return list of delete responses
-     * @throws NotFoundException if dish with id does not exist
-     * */
+     * Deletes dishes based on the provided IDs.
+     *
+     * @param ids the list of dish IDs to delete
+     * @return a list of responses containing the details of the deleted dishes
+     * @throws NotFoundException if a dish with the given ID does not exist
+     */
     @Transactional
     @Override
     public List<DishDeleteResponse> deleteDish(List<Long> ids) {
@@ -194,59 +175,89 @@ public class DishService implements IDishService {
             dishRepository.delete(dish);
             log.debug(String.format("Dish deleted: %s", dish));
 
-            result.add(DishDeleteResponse.builder()
-                    .id(dish.getId())
-                    .name(dish.getName())
-                    .description(dish.getDescription())
-                    .created(dish.getCreated())
-//                    .createdBy(dish.getCreatedBy())
-                    .updated(dish.getUpdated())
-//                    .updatedBy(dish.getUpdatedBy())
-                    .build());
+            result.add(Parser.toDishDeleteResponse(dish));
         }
         return result;
     }
 
     /**
-     * Gets all dishes or dish using the id
-     * @param id id of the dish
-     * @return list of get responses
-     * @throws NotFoundException if dish with id does not exist
-     * */
+     * Retrieves dishes based on the provided ID.
+     *
+     * @param id the ID of the dish to retrieve (optional)
+     * @return a list of responses containing the details of the retrieved dishes
+     * @throws NotFoundException if a dish with the given ID does not exist
+     */
     @Override
     public List<DishGetResponse> getDishes(Long id) {
-        final List<DishGetResponse> result = new ArrayList<>();
         if (id != null) {
             Dish dish = dishRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException(String.format("Dish with id %s does not exist", id)));
-            result.add(DishGetResponse.builder()
+            return List.of(Parser.toDishGetResponse(dish));
+        }
+        return dishRepository.findAll().stream().map(Parser::toDishGetResponse).collect(Collectors.toList());
+    }
+
+    public static class Parser {
+        private static DishCreateResponse toDishCreateResponse(Dish dish) {
+            final Set<DishPortion> dishPortions = dish.getDishPortions();
+
+            return DishCreateResponse.builder()
                     .id(dish.getId())
                     .name(dish.getName())
                     .description(dish.getDescription())
-//                    .images(dish.getImages())
-                    .reviews(dish.getReviews())
-                    .dishPortions(dish.getDishPortions())
+                    .portions(dishPortions.stream().map(portion -> DishPortionGetResponseWithoutDishName.builder()
+                            .portionName(portion.getPortion().getName())
+                            .price(portion.getPrice())
+                            .build()).collect(Collectors.toList()))
                     .created(dish.getCreated())
-//                    .createdBy(dish.getCreatedBy())
                     .updated(dish.getUpdated())
-//                    .updatedBy(dish.getUpdatedBy())
-                    .build());
-        } else {
-            for (Dish dish : dishRepository.findAll()) {
-                result.add(DishGetResponse.builder()
-                        .id(dish.getId())
-                        .name(dish.getName())
-                        .description(dish.getDescription())
-//                        .images(dish.getImages())
-                        .reviews(dish.getReviews())
-                        .dishPortions(dish.getDishPortions())
-                        .created(dish.getCreated())
-//                        .createdBy(dish.getCreatedBy())
-                        .updated(dish.getUpdated())
-//                        .updatedBy(dish.getUpdatedBy())
-                        .build());
-            }
+                    .build();
         }
-        return result;
+
+        private static DishUpdateResponse toDishUpdateResponse(Dish dish) {
+            return DishUpdateResponse.builder()
+                    .id(dish.getId())
+                    .name(dish.getName())
+                    .description(dish.getDescription())
+                    .created(dish.getCreated())
+                    .updated(dish.getUpdated())
+                    .build();
+        }
+
+        private static DishDeleteResponse toDishDeleteResponse(Dish dish) {
+            return DishDeleteResponse.builder()
+                    .id(dish.getId())
+                    .name(dish.getName())
+                    .description(dish.getDescription())
+                    .created(dish.getCreated())
+                    .updated(dish.getUpdated())
+                    .build();
+        }
+
+        private static DishGetResponse toDishGetResponse(Dish dish) {
+            final byte[] decompressedImage = dish.getImage() == null ? null : imageUtil.decompressImage(dish.getImage());
+
+            return DishGetResponse.builder()
+                    .id(dish.getId())
+                    .name(dish.getName())
+                    .description(dish.getDescription())
+                    .reviews(dish.getReviews().stream().map(review -> ReviewGetResponseWithoutDishId.builder()
+                            .id(review.getId())
+                            .title(review.getTitle())
+                            .content(review.getContent())
+                            .rating(review.getRating())
+                            .customerId(review.getCustomer().getId())
+                            .created(review.getCreated())
+                            .updated(review.getUpdated())
+                            .build()).collect(Collectors.toSet()))
+                    .dishPortions(dish.getDishPortions().stream().map(portion -> DishPortionGetResponseWithoutDishName.builder()
+                            .portionName(portion.getPortion().getName())
+                            .price(portion.getPrice())
+                            .build()).collect(Collectors.toSet()))
+                    .image(decompressedImage)
+                    .created(dish.getCreated())
+                    .updated(dish.getUpdated())
+                    .build();
+        }
     }
 }
