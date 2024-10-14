@@ -1,8 +1,8 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
+import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.entities.Cart;
-import com.iamnirvan.restaurant.core.models.entities.Dish;
 import com.iamnirvan.restaurant.core.models.entities.DishPortion;
 import com.iamnirvan.restaurant.core.models.entities.DishPortionCart;
 import com.iamnirvan.restaurant.core.models.requests.cart.AddDishIntoCartRequest;
@@ -14,7 +14,6 @@ import com.iamnirvan.restaurant.core.models.responses.dish_portion.DishPortionGe
 import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.DishPortionCartRepository;
 import com.iamnirvan.restaurant.core.repositories.DishPortionRepository;
-import com.iamnirvan.restaurant.core.repositories.DishRepository;
 import com.iamnirvan.restaurant.core.services.ICartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -23,69 +22,91 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class CartService implements ICartService {
     private final CartRepository cartRepository;
-    private final DishRepository dishRepository;
     private final DishPortionRepository dishPortionRepository;
     private final DishPortionCartRepository dishPortionCartRepository;
 
     /**
-     * Adds multiple items into the cart
-     * @param id cart id
-     * @param requests list of requests containing the dish portion ids and quantities to be added
-     * @return response containing the dish portions added
+     * Manipulates the content of the cart by adding or updating dish portions.
+     *
+     * @param id the ID of the cart
+     * @param requests a list of requests containing dish portion IDs and quantities to be added or updated
+     * @return a list of responses containing the updated cart content
      * @throws NotFoundException if the cart or dish portion does not exist
-     * */
+     * @throws ConflictException if the quantity is zero when adding a new dish portion
+     */
     @Override
     @Transactional
-    public List<AddDishIntoCartResponse> addDishPortionIntoCart(Long id, List<AddDishIntoCartRequest> requests) {
+    public List<AddDishIntoCartResponse> manipulateCartContent(Long id, List<AddDishIntoCartRequest> requests) {
+        // TODO: Get the customer's active cart (get the customer id from the token)
+        final List<AddDishIntoCartResponse> result = new ArrayList<>();
+
         final Cart cart = cartRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Cart with id %d does not exist", id)));
 
-        List<AddDishIntoCartResponse> result = new ArrayList<>();
         for (AddDishIntoCartRequest request : requests) {
-            DishPortion dishPortion = dishPortionRepository.findById(request.getDishPortionId())
+            boolean removeItemFromCart = false;
+
+            DishPortionCart dishPortionCart = dishPortionCartRepository.findByCartIdAndDishPortionId(
+                    cart.getId(),
+                    request.getDishPortionId()
+            );
+
+            // Get the dish portion (small pizza) from the database
+            final DishPortion dishPortion = dishPortionRepository.findById(request.getDishPortionId())
                     .orElseThrow(() -> new NotFoundException(String.format("Dish portion with id %d does not exist", request.getDishPortionId())));
 
-            Dish dish = dishRepository.findById(dishPortion.getDish().getId())
-                    .orElseThrow(() -> new NotFoundException(String.format("Dish with id %d does not exist", dishPortion.getDish().getId())));
+            if (dishPortionCart != null) {
+                // This means the dishPortion is already in then cart... Therefore, update the quantity.
+                if (request.getQuantity() == 0) {
+                    removeItemFromCart = true;
+                } else {
+                    dishPortionCart.setQuantity(request.getQuantity());
+                }
+            } else {
+                // Check if the quantity is 0
+                if (request.getQuantity() == 0) {
+                    throw new ConflictException("Quantity must be greater than 0");
+                }
 
-            // Save the associative entity record...
-            DishPortionCart dishPortionCart = DishPortionCart.builder()
-                    .cart(cart)
-                    .dishPortion(dishPortion)
-                    .quantity(request.getQuantity())
-                    .build();
-            dishPortionCartRepository.save(dishPortionCart);
+                dishPortionCart = DishPortionCart.builder()
+                        .quantity(request.getQuantity())
+                        .cart(cart)
+                        .dishPortion(dishPortion)
+                        .build();
+            }
 
-            result.add(AddDishIntoCartResponse.builder()
-                    .cartId(cart.getId())
-                    .dishPortion(DishPortionGetResponse.builder()
-                            .dishName(dish.getName())
-                            .portionName(dishPortion.getPortion().getName())
-                            .price(dishPortion.getPrice())
-                            .quantity(request.getQuantity())
-                            .build())
-                    .build());
+            // Save the changes that were made to the cart
+            if (removeItemFromCart) {
+                dishPortionCartRepository.delete(dishPortionCart);
+            } else {
+                dishPortionCartRepository.save(dishPortionCart);
+            }
+            log.debug("Updated contents of the cart");
 
+            result.add(Parser.toAddDishIntoCartResponse(cart, dishPortion, request.getQuantity()));
         }
-        log.debug("Dishes added to the cart");
+
         return result;
     }
 
     /**
      * Removes multiple dishes from the cart
-     * @param id cart id
+     *
+     * @param id       cart id
      * @param requests requests containing the dish portion cart ids to be removed
      * @return response containing the dish portions removed
      * @throws NotFoundException if the cart or dish portion cart does not exist
-     * */
+     */
     @Override
     @Transactional
+    @Deprecated
     public List<RemoveDishFromCartResponse> removeDishPortionFromCart(Long id, List<RemoveDishFromCartRequest> requests) {
         final Cart cart = cartRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Cart with id %d does not exist", id)));
@@ -111,46 +132,46 @@ public class CartService implements ICartService {
     }
 
     /**
-     * Gets all the carts or the cart corresponding to the id
-     * @param id cart id
-     * @return response containing the cart and its items
+     * Retrieves the content of the cart.
+     *
+     * @param id the ID of the cart
+     * @return a response containing the cart content
      * @throws NotFoundException if the cart does not exist
-     * */
+     */
     @Override
-    public GetCartResponse getCart(Long id) {
-        List<DishPortionGetResponse> dishes = new ArrayList<>();
-        if (id != null) {
-            Cart cart = cartRepository.findById(id)
-                    .orElseThrow(() -> new NotFoundException(String.format("Cart with id %s does not exist", id)));
+    public GetCartResponse getCartContent(Long id) {
+        Cart cart = cartRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Cart with id %s does not exist", id)));
+        return Parser.toGetCartResponse(cart);
+    }
 
-            for (DishPortionCart dishPortionCart : cart.getDishPortionCarts()) {
-                dishes.add(DishPortionGetResponse.builder()
-                        .dishName(dishPortionCart.getDishPortion().getDish().getName())
-                        .portionName(dishPortionCart.getDishPortion().getPortion().getName())
-                        .price(dishPortionCart.getDishPortion().getPrice())
-                        .quantity(dishPortionCart.getQuantity())
-                        .build());
-            }
-           return GetCartResponse.builder()
-                    .id(cart.getId())
-                    .dishes(dishes)
+    public static class Parser {
+        public static AddDishIntoCartResponse toAddDishIntoCartResponse(Cart cart, DishPortion dishPortion, int quantity) {
+            return AddDishIntoCartResponse.builder()
+                    .cartId(cart.getId())
+                    .dishPortion(DishPortionGetResponse.builder()
+                            .dishName(dishPortion.getDish().getName())
+                            .portionName(dishPortion.getPortion().getName())
+                            .price(dishPortion.getPrice())
+                            .quantity(quantity)
+                            .build())
                     .build();
-        } else {
-            for (Cart cart : cartRepository.findAll()) {
-                for (DishPortionCart dishPortionCart : cart.getDishPortionCarts()) {
-                    dishes.add(DishPortionGetResponse.builder()
-                            .dishName(dishPortionCart.getDishPortion().getDish().getName())
-                            .portionName(dishPortionCart.getDishPortion().getPortion().getName())
-                            .price(dishPortionCart.getDishPortion().getPrice())
-                            .quantity(dishPortionCart.getQuantity())
-                            .build());
-                }
-                return GetCartResponse.builder()
-                        .id(cart.getId())
-                        .dishes(dishes)
-                        .build();
-            }
         }
-        return null;
+
+        public static GetCartResponse toGetCartResponse(Cart cart) {
+            return GetCartResponse.builder()
+                    .id(cart.getId())
+                    .dishes(cart.getDishPortionCarts().stream().map(cartContents -> Parser.toDishPortionGetResponse(cartContents.getDishPortion(), cartContents.getQuantity())).collect(Collectors.toList()))
+                    .build();
+        }
+
+        public static DishPortionGetResponse toDishPortionGetResponse(DishPortion dishPortion, int quantity) {
+            return DishPortionGetResponse.builder()
+                    .dishName(dishPortion.getDish().getName())
+                    .portionName(dishPortion.getPortion().getName())
+                    .price(dishPortion.getPrice())
+                    .quantity(quantity)
+                    .build();
+        }
     }
 }
