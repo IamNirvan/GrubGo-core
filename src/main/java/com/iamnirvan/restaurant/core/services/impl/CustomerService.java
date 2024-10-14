@@ -118,6 +118,7 @@ public class CustomerService implements ICustomerService {
         log.debug(String.format("Customer created: %s", customer));
 
         return CustomerCreateResponse.builder()
+                .id(customer.getId())
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
                 .created(customer.getCreated())

@@ -8,6 +8,7 @@ import java.time.OffsetDateTime;
 @Data
 @Builder
 public class CustomerCreateResponse {
+    private Long id;
     private String firstName;
     private String lastName;
     private OffsetDateTime created;

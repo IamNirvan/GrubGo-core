@@ -12,9 +12,9 @@ import java.util.Optional;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     boolean existsByUsername(String username);
-    @Query("SELECT new com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse(c.id, c.firstName, c.lastName, c.password, c.updated) FROM Customer c")
+    @Query("SELECT new com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse(c.id, c.firstName, c.lastName, c.username, c.password, c.updated) FROM Customer c")
     List<CustomerGetResponse> findAllCustomers();
-    @Query("SELECT new com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse(c.id, c.firstName, c.lastName, c.password, c.updated) FROM Customer c WHERE c.id = :id")
+    @Query("SELECT new com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse(c.id, c.firstName, c.lastName, c.username, c.password, c.updated) FROM Customer c WHERE c.id = :id")
     Optional<CustomerGetResponse> findCustomerById(Long id);
 
 }
