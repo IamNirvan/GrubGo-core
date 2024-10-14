@@ -1,6 +1,5 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
-import com.iamnirvan.restaurant.core.enums.EDesignation;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -20,7 +19,6 @@ public class Employee extends DateTimeWithoutUser {
     private Long id;
     private String firstName;
     private String lastName;
-    private EDesignation designation;
     private String username;
     private String password;
 }

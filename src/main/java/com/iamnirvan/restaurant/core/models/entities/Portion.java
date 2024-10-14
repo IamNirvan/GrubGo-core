@@ -20,7 +20,7 @@ import java.util.Set;
 @NoArgsConstructor
 @SuperBuilder
 @SequenceGenerator(name = "portion_sequence", sequenceName = "portion_sequence", allocationSize = 1)
-public class Portion extends DateTimeWithUser {
+public class Portion extends DateTimeWithoutUser {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "portion_sequence")
     private Long id;

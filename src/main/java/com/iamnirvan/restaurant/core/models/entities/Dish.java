@@ -21,7 +21,7 @@ import java.util.Set;
 @NoArgsConstructor
 @SuperBuilder
 @SequenceGenerator(name = "dish_sequence", sequenceName = "dish_sequence", allocationSize = 1)
-public class Dish extends DateTimeWithUser {
+public class Dish extends DateTimeWithoutUser {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "dish_sequence")
     private Long id;

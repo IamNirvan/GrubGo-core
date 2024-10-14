@@ -1,6 +1,5 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
-import com.iamnirvan.restaurant.core.enums.EDesignation;
 import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.entities.Employee;
@@ -44,7 +43,7 @@ public class EmployeeService implements IEmployeeService {
                 .lastName(request.getLastName())
                 .username(request.getUsername())
                 .password(request.getPassword())
-                .designation(EDesignation.ADMIN)
+//                .designation(EDesignation.ADMIN)
                 .created(OffsetDateTime.now())
                 .build();
 
@@ -112,7 +111,7 @@ public class EmployeeService implements IEmployeeService {
                 .firstName(employee.getFirstName())
                 .lastName(employee.getLastName())
                 .username(employee.getUsername())
-                .designation(employee.getDesignation())
+//                .designation(employee.getDesignation())
                 .build();
     }
 

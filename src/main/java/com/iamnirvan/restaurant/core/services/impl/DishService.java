@@ -115,9 +115,9 @@ public class DishService implements IDishService {
                     .name(dish.getName())
                     .description(dish.getDescription())
                     .created(dish.getCreated())
-                    .createdBy(dish.getCreatedBy())
+//                    .createdBy(dish.getCreatedBy())
                     .updated(dish.getUpdated())
-                    .updatedBy(dish.getUpdatedBy())
+//                    .updatedBy(dish.getUpdatedBy())
                     .build());
         }
         return result;
@@ -168,9 +168,9 @@ public class DishService implements IDishService {
                     .name(dish.getName())
                     .description(dish.getDescription())
                     .created(dish.getCreated())
-                    .createdBy(dish.getCreatedBy())
+//                    .createdBy(dish.getCreatedBy())
                     .updated(dish.getUpdated())
-                    .updatedBy(dish.getUpdatedBy())
+//                    .updatedBy(dish.getUpdatedBy())
                     .build());
         }
         return result;
@@ -199,9 +199,9 @@ public class DishService implements IDishService {
                     .name(dish.getName())
                     .description(dish.getDescription())
                     .created(dish.getCreated())
-                    .createdBy(dish.getCreatedBy())
+//                    .createdBy(dish.getCreatedBy())
                     .updated(dish.getUpdated())
-                    .updatedBy(dish.getUpdatedBy())
+//                    .updatedBy(dish.getUpdatedBy())
                     .build());
         }
         return result;
@@ -227,9 +227,9 @@ public class DishService implements IDishService {
                     .reviews(dish.getReviews())
                     .dishPortions(dish.getDishPortions())
                     .created(dish.getCreated())
-                    .createdBy(dish.getCreatedBy())
+//                    .createdBy(dish.getCreatedBy())
                     .updated(dish.getUpdated())
-                    .updatedBy(dish.getUpdatedBy())
+//                    .updatedBy(dish.getUpdatedBy())
                     .build());
         } else {
             for (Dish dish : dishRepository.findAll()) {
@@ -241,9 +241,9 @@ public class DishService implements IDishService {
                         .reviews(dish.getReviews())
                         .dishPortions(dish.getDishPortions())
                         .created(dish.getCreated())
-                        .createdBy(dish.getCreatedBy())
+//                        .createdBy(dish.getCreatedBy())
                         .updated(dish.getUpdated())
-                        .updatedBy(dish.getUpdatedBy())
+//                        .updatedBy(dish.getUpdatedBy())
                         .build());
             }
         }

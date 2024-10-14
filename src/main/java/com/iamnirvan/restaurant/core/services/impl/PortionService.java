@@ -36,6 +36,7 @@ public class PortionService implements IPortionService {
      * @throws BadRequestException if portion with name already exists
      */
     @Override
+    @Deprecated
     public List<PortionCreateResponse> createPortion(List<PortionCreateRequest> requests) throws BadRequestException {
         final List<PortionCreateResponse> result = new ArrayList<>();
 
@@ -55,9 +56,9 @@ public class PortionService implements IPortionService {
             result.add(PortionCreateResponse.builder()
                     .id(portion.getId())
                     .name(portion.getName())
-                    .createdBy(portion.getCreatedBy())
+//                    .createdBy(portion.getCreatedBy())
                     .created(portion.getCreated())
-                    .updatedBy(portion.getUpdatedBy())
+//                    .updatedBy(portion.getUpdatedBy())
                     .updated(portion.getUpdated())
                     .build());
         }
@@ -73,6 +74,7 @@ public class PortionService implements IPortionService {
      * @throws BadRequestException if portion name is empty or already exists
      */
     @Override
+    @Deprecated
     public List<PortionUpdateResponse> updatePortion(List<PortionUpdateRequest> requests) throws NotFoundException, BadRequestException {
         final List<PortionUpdateResponse> result = new ArrayList<>();
 
@@ -99,9 +101,9 @@ public class PortionService implements IPortionService {
                     .id(portion.getId())
                     .name(portion.getName())
                     .created(portion.getCreated())
-                    .createdBy(portion.getCreatedBy())
+//                    .createdBy(portion.getCreatedBy())
                     .updated(portion.getUpdated())
-                    .updatedBy(portion.getUpdatedBy())
+//                    .updatedBy(portion.getUpdatedBy())
                     .build());
         }
         return result;
@@ -116,6 +118,7 @@ public class PortionService implements IPortionService {
      */
     @Override
     @Transactional
+    @Deprecated
     public List<PortionDeleteResponse> deletePortion(List<Long> ids) throws NotFoundException {
         final List<PortionDeleteResponse> result = new ArrayList<>();
 
@@ -134,9 +137,9 @@ public class PortionService implements IPortionService {
                     .id(portion.getId())
                     .name(portion.getName())
                     .created(portion.getCreated())
-                    .createdBy(portion.getCreatedBy())
+//                    .createdBy(portion.getCreatedBy())
                     .updated(portion.getUpdated())
-                    .updatedBy(portion.getUpdatedBy())
+//                    .updatedBy(portion.getUpdatedBy())
                     .build());
         }
         return result;
@@ -151,30 +154,11 @@ public class PortionService implements IPortionService {
      */
     @Override
     public List<PortionGetResponse> getPortions(Long id) throws NotFoundException {
-        final List<PortionGetResponse> result = new ArrayList<>();
         if (id != null) {
-            Portion address = portionRepository.findById(id).orElseThrow(() ->
-                    new NotFoundException((String.format("Portion with id %s does not exist", id))));
-            result.add(PortionGetResponse.builder()
-                    .id(address.getId())
-                    .name(address.getName())
-                    .createdBy(address.getCreatedBy())
-                    .created(address.getCreated())
-                    .updatedBy(address.getUpdatedBy())
-                    .updated(address.getUpdated())
-                    .build());
-        } else {
-            for (Portion portion : portionRepository.findAll()) {
-                result.add(PortionGetResponse.builder()
-                        .id(portion.getId())
-                        .name(portion.getName())
-                        .createdBy(portion.getCreatedBy())
-                        .created(portion.getCreated())
-                        .updatedBy(portion.getUpdatedBy())
-                        .updated(portion.getUpdated())
-                        .build());
-            }
+            PortionGetResponse portion = portionRepository.getPortionById(id)
+                    .orElseThrow(() -> new NotFoundException(String.format("Portion with id %s does not exist", id)));
+            return List.of(portion);
         }
-        return result;
+        return portionRepository.getAllPortions();
     }
 }
