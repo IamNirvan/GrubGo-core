@@ -20,6 +20,7 @@ import com.iamnirvan.restaurant.core.repositories.PortionRepository;
 import com.iamnirvan.restaurant.core.services.IDishService;
 import com.iamnirvan.restaurant.core.util.Image.ImageUtil;
 import lombok.extern.log4j.Log4j2;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,12 +66,7 @@ public class DishService implements IDishService {
             MultipartFile image = request.getImage();
             byte[] compressedImage = null;
             if (image != null) {
-                try {
-                    compressedImage = imageUtil.compressImage(image.getBytes());
-                } catch (IOException e) {
-                    log.error("Failed to compress image", e);
-                    throw new RuntimeException(e);
-                }
+                compressedImage = Parser.toCompressedImage(image);
             }
 
             Dish dish = Dish.builder()
@@ -147,6 +143,11 @@ public class DishService implements IDishService {
                 dish.setDescription(request.getDescription());
             }
 
+            if (request.getImage() != null) {
+                byte[] compressedImage = Parser.toCompressedImage(request.getImage());
+                dish.setImage(compressedImage);
+            }
+
             dish.setUpdated(OffsetDateTime.now());
             dishRepository.save(dish);
             log.debug(String.format("Dish updated: %s", dish));
@@ -188,16 +189,25 @@ public class DishService implements IDishService {
      * @throws NotFoundException if a dish with the given ID does not exist
      */
     @Override
-    public List<DishGetResponse> getDishes(Long id) {
+    public List<DishGetResponse> getDishes(Long id, boolean includeImg) {
         if (id != null) {
             Dish dish = dishRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException(String.format("Dish with id %s does not exist", id)));
-            return List.of(Parser.toDishGetResponse(dish));
+            return List.of(Parser.toDishGetResponse(dish, includeImg));
         }
-        return dishRepository.findAll().stream().map(Parser::toDishGetResponse).collect(Collectors.toList());
+        return dishRepository.findAll().stream().map(dish -> Parser.toDishGetResponse(dish, includeImg)).collect(Collectors.toList());
     }
 
     public static class Parser {
+        private static byte[] toCompressedImage(@NotNull MultipartFile file) {
+            try {
+                return imageUtil.compressImage(file.getBytes());
+            } catch (IOException e) {
+                log.error("Failed to compress image", e);
+                throw new RuntimeException(e);
+            }
+        }
+
         private static DishCreateResponse toDishCreateResponse(Dish dish) {
             final Set<DishPortion> dishPortions = dish.getDishPortions();
 
@@ -234,8 +244,8 @@ public class DishService implements IDishService {
                     .build();
         }
 
-        private static DishGetResponse toDishGetResponse(Dish dish) {
-            final byte[] decompressedImage = dish.getImage() == null ? null : imageUtil.decompressImage(dish.getImage());
+        private static DishGetResponse toDishGetResponse(Dish dish, boolean includeImg) {
+            final byte[] decompressedImage = (dish.getImage() == null || !includeImg) ? null : imageUtil.decompressImage(dish.getImage());
 
             return DishGetResponse.builder()
                     .id(dish.getId())

@@ -9,6 +9,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DishCreateRequestList {
-    private List<DishCreateRequest> requests;
+public class DishUpdateRequestList {
+    private List<DishUpdateRequest> requests;
 }
