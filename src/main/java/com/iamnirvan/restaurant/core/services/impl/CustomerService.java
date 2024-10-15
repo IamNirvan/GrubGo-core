@@ -227,7 +227,7 @@ public class CustomerService implements ICustomerService {
                     .id(customer.getId())
                     .firstName(customer.getFirstName())
                     .lastName(customer.getLastName())
-                    .username(account.getUsername())
+                    .accountInfo(AccountService.Parser.toAccountUpdateResponse(account))
                     .updated(customer.getUpdated())
                     .build();
         }

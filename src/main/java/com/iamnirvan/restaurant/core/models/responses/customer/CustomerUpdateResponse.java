@@ -1,5 +1,7 @@
 package com.iamnirvan.restaurant.core.models.responses.customer;
 
+import com.iamnirvan.restaurant.core.models.responses.user.AccountGetResponse;
+import com.iamnirvan.restaurant.core.models.responses.user.AccountUpdateResponse;
 import lombok.Builder;
 import lombok.Data;
 
@@ -9,8 +11,8 @@ import java.time.OffsetDateTime;
 @Builder
 public class CustomerUpdateResponse {
     private Long id;
-    private String username;
     private String firstName;
     private String lastName;
+    private AccountUpdateResponse accountInfo;
     private OffsetDateTime updated;
 }
