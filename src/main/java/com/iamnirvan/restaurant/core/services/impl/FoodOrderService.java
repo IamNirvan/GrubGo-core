@@ -86,6 +86,14 @@ public class FoodOrderService implements IFoodOrderService {
         return result;
     }
 
+    /**
+     * Retrieves a list of food orders based on the provided order ID or customer ID.
+     *
+     * @param id the ID of the food order to retrieve (optional)
+     * @param customerId the ID of the customer whose orders to retrieve (optional)
+     * @return a list of FoodOrderGetResponse objects containing the details of the retrieved orders
+     * @throws NotFoundException if the order with the specified ID does not exist
+     */
     @Override
     public List<FoodOrderGetResponse> getOrders(Long id, Long customerId) {
 
