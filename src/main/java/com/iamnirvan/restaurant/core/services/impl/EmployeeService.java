@@ -29,9 +29,9 @@ public class EmployeeService implements IEmployeeService {
     @Override
     public EmployeeCreateResponse createEmployee(EmployeeCreateRequest request) {
 
-        if (employeeRepository.existsByUsername(request.getUsername())) {
-            throw new BadRequestException("Username already exists");
-        }
+//        if (employeeRepository.existsByUsername(request.getUsername())) {
+//            throw new BadRequestException("Username already exists");
+//        }
 
         if (!passwordVerification.verifyPassword(request.getPassword())) {
             throw new BadRequestException("Password must contain at least 8 characters, one uppercase letter," +
@@ -41,8 +41,8 @@ public class EmployeeService implements IEmployeeService {
         Employee employee = Employee.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .username(request.getUsername())
-                .password(request.getPassword())
+//                .username(request.getUsername())
+//                .password(request.getPassword())
 //                .designation(EDesignation.ADMIN)
                 .created(OffsetDateTime.now())
                 .build();
@@ -53,8 +53,8 @@ public class EmployeeService implements IEmployeeService {
         return EmployeeCreateResponse.builder()
                 .firstName(employee.getFirstName())
                 .lastName(employee.getLastName())
-                .username(employee.getUsername())
-                .password(employee.getPassword())
+//                .username(employee.getUsername())
+//                .password(employee.getPassword())
                 .created(employee.getCreated())
                 .build();
     }
@@ -70,7 +70,7 @@ public class EmployeeService implements IEmployeeService {
                 throw new BadRequestException("Password must contain at least 8 characters, one uppercase letter," +
                         " one lowercase letter, one number and one special character");
             }
-            employee.setPassword(request.getPassword());
+//            employee.setPassword(request.getPassword());
         }
 
         if (request.getFirstName() != null) {
@@ -94,7 +94,7 @@ public class EmployeeService implements IEmployeeService {
         return EmployeeUpdateResponse.builder()
                 .firstName(employee.getFirstName())
                 .lastName(employee.getLastName())
-                .password(employee.getPassword())
+//                .password(employee.getPassword())
                 .updated(employee.getUpdated())
                 .build();
     }
@@ -110,7 +110,7 @@ public class EmployeeService implements IEmployeeService {
         return EmployeeDeleteResponse.builder()
                 .firstName(employee.getFirstName())
                 .lastName(employee.getLastName())
-                .username(employee.getUsername())
+//                .username(employee.getUsername())
 //                .designation(employee.getDesignation())
                 .build();
     }

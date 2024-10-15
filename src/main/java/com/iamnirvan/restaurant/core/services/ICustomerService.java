@@ -2,7 +2,7 @@ package com.iamnirvan.restaurant.core.services;
 
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerUpdateRequest;
-import com.iamnirvan.restaurant.core.models.responses.customer.CustomerCreateResponse;
+import com.iamnirvan.restaurant.core.models.responses.customer.CustomerRegisterResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerUpdateResponse;
@@ -10,7 +10,7 @@ import com.iamnirvan.restaurant.core.models.responses.customer.CustomerUpdateRes
 import java.util.List;
 
 public interface ICustomerService {
-    CustomerCreateResponse registerCustomer(CustomerCreateRequest request);
+    CustomerRegisterResponse registerCustomer(CustomerCreateRequest request);
 
     CustomerUpdateResponse updateCustomer(Long id, CustomerUpdateRequest request);
 

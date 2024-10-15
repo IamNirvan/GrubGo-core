@@ -25,21 +25,18 @@ public class Customer extends DateTimeWithoutUser {
     private Long id;
     private String firstName;
     private String lastName;
-    private String username;
-    private String password;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    @JsonManagedReference
     @ToString.Exclude
     private Set<CustomerAllergen> allergens;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    @JsonManagedReference
     @ToString.Exclude
     private Set<Address> addresses;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @ToString.Exclude
     private Set<Review> reviews;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    @JsonManagedReference
     @ToString.Exclude
     private Set<Cart> cart;
+    @OneToOne(cascade = CascadeType.REMOVE)
+    private Account account;
 }

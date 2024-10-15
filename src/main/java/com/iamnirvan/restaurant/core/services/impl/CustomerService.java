@@ -2,23 +2,25 @@ package com.iamnirvan.restaurant.core.services.impl;
 
 import com.iamnirvan.restaurant.core.enums.EActiveStatus;
 import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
+import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
-import com.iamnirvan.restaurant.core.models.entities.Address;
-import com.iamnirvan.restaurant.core.models.entities.Cart;
-import com.iamnirvan.restaurant.core.models.entities.Customer;
-import com.iamnirvan.restaurant.core.models.entities.CustomerAllergen;
+import com.iamnirvan.restaurant.core.models.entities.*;
 import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequestWithoutCustomer;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerUpdateRequest;
-import com.iamnirvan.restaurant.core.models.responses.customer.CustomerCreateResponse;
+import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
+import com.iamnirvan.restaurant.core.models.responses.customer.CustomerRegisterResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerUpdateResponse;
+import com.iamnirvan.restaurant.core.models.responses.user.AccountUpdateResponse;
+import com.iamnirvan.restaurant.core.repositories.AccountRepository;
 import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
 import com.iamnirvan.restaurant.core.services.ICustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,31 +36,41 @@ import java.util.Set;
 public class CustomerService implements ICustomerService {
     private final CustomerRepository customerRepository;
     private final CartRepository cartRepository;
+    private final AccountService accountService;
 
     /**
      * Registers a new customer.
      *
-     * @param request the customer creation request containing the details of the new customer
-     * @return a response containing the details of the created customer
-     * @throws BadRequestException if a customer with the given username already exists
+     * @param request the customer creation request containing customer details
+     * @return the response containing the created customer's details
+     * @throws ConflictException if there is a conflict while creating the user
+     * @throws NotFoundException if the role specified in the request is not found
      */
     @Override
     @Transactional
-    public CustomerCreateResponse registerCustomer(CustomerCreateRequest request) {
-        if (customerRepository.existsByUsername(request.getUsername())) {
-            throw new BadRequestException("Username already exists");
+    public CustomerRegisterResponse registerCustomer(@NotNull CustomerCreateRequest request) {
+        // First create the customer's account
+        Account account = null;
+        try {
+            AccountCreateRequest accountCreateRequest = new AccountCreateRequest();
+            accountCreateRequest.setPassword(request.getPassword());
+            accountCreateRequest.setUsername(request.getUsername());
+            accountCreateRequest.setRoleId(request.getRoleId());
+            account = accountService.createAccount(accountCreateRequest);
+        } catch (ConflictException | NotFoundException ex) {
+            log.error("Error creating user", ex);
+            throw ex;
         }
 
+        // Then create the customer instance
         Customer customer = Customer.builder()
-                .username(request.getUsername())
-                .password(request.getPassword())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
+                .account(account)
                 .created(OffsetDateTime.now())
                 .build();
 
         customerRepository.save(customer);
-
 
         // Handle the allergens
        Set<CustomerAllergen> allergens = null;
@@ -115,23 +128,18 @@ public class CustomerService implements ICustomerService {
                 .build();
         cartRepository.save(cart);
 
-        log.debug(String.format("Customer created: %s", customer));
+        log.debug("Customer created: {}", customer);
 
-        return CustomerCreateResponse.builder()
-                .id(customer.getId())
-                .firstName(customer.getFirstName())
-                .lastName(customer.getLastName())
-                .created(customer.getCreated())
-                .build();
+        return Parser.toCustomerRegisterResponse(customer);
     }
 
     /**
      * Updates an existing customer.
      *
      * @param id the ID of the customer to update
-     * @param request the customer update request containing the new details of the customer
-     * @return a response containing the updated details of the customer
-     * @throws NotFoundException if the customer with the given ID does not exist
+     * @param request the customer update request containing updated details
+     * @return the response containing the updated customer's details
+     * @throws NotFoundException if the customer with the specified ID does not exist
      * @throws BadRequestException if the first name or last name is empty
      */
     @Override
@@ -140,8 +148,14 @@ public class CustomerService implements ICustomerService {
         Customer customer = customerRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(String.format("Customer with id %s does not exist", id)));
 
-        if (request.getPassword() != null) {
-            customer.setPassword(request.getPassword());
+        AccountUpdateResponse accountUpdateResponse = null;
+        try {
+            if (request.getAccountInfo() != null) {
+                accountUpdateResponse = accountService.updateAccount(customer.getAccount().getId(), request.getAccountInfo());
+            }
+        } catch (Exception ex) {
+            log.error("Error updating user", ex);
+            throw ex;
         }
 
         if (request.getFirstName() != null) {
@@ -160,22 +174,17 @@ public class CustomerService implements ICustomerService {
 
         customer.setUpdated(OffsetDateTime.now());
         customerRepository.save(customer);
-        log.debug(String.format("Customer updated: %s", customer));
+        log.debug("Customer updated: {}", customer);
 
-        return CustomerUpdateResponse.builder()
-                .firstName(customer.getFirstName())
-                .lastName(customer.getLastName())
-                .password(customer.getPassword())
-                .updated(customer.getUpdated())
-                .build();
+        return Parser.toCustomerUpdateResponse(customer);
     }
 
     /**
      * Deletes an existing customer.
      *
      * @param id the ID of the customer to delete
-     * @return a response containing the details of the deleted customer
-     * @throws NotFoundException if the customer with the given ID does not exist
+     * @return the response containing the deleted customer's details
+     * @throws NotFoundException if the customer with the specified ID does not exist
      */
     @Override
     public CustomerDeleteResponse deleteCustomer(Long id) {
@@ -183,7 +192,7 @@ public class CustomerService implements ICustomerService {
                 new NotFoundException((String.format("Customer with id %s does not exist", id))));
 
         customerRepository.delete(employee);
-        log.debug(String.format("Customer deleted: %s", employee));
+        log.debug("Customer deleted: {}", employee);
 
         return CustomerDeleteResponse.builder()
                 .id(employee.getId())
@@ -193,19 +202,59 @@ public class CustomerService implements ICustomerService {
     }
 
     /**
-     * Retrieves customers.
+     * Retrieves a list of customers or a specific customer by ID.
      *
      * @param id the ID of the customer to retrieve (optional)
      * @return a list of customer responses
-     * @throws NotFoundException if the customer with the given ID does not exist
+     * @throws NotFoundException if the customer with the specified ID does not exist
      */
     @Override
     public List<CustomerGetResponse> getCustomers(Long id) {
         if (id != null) {
-            CustomerGetResponse customer = customerRepository.findCustomerById(id).orElseThrow(() ->
+            Customer customer = customerRepository.findById(id).orElseThrow(() ->
                     new NotFoundException(String.format("Customer with id %s does not exist", id)));
-            return List.of(customer);
+            return List.of(Parser.toCustomerGetResponse(customer));
         }
-        return customerRepository.findAllCustomers();
+        return customerRepository.findAll().stream().map(Parser::toCustomerGetResponse).collect(Collectors.toList());
+    }
+
+
+    public static class Parser {
+        public static CustomerUpdateResponse toCustomerUpdateResponse(Customer customer) {
+            final Account account = customer.getAccount();
+
+            return CustomerUpdateResponse.builder()
+                    .id(customer.getId())
+                    .firstName(customer.getFirstName())
+                    .lastName(customer.getLastName())
+                    .username(account.getUsername())
+                    .updated(customer.getUpdated())
+                    .build();
+        }
+
+        public static CustomerGetResponse toCustomerGetResponse(Customer customer) {
+            final Account account = customer.getAccount();
+
+            return CustomerGetResponse.builder()
+                    .id(customer.getId())
+                    .firstName(customer.getFirstName())
+                    .lastName(customer.getLastName())
+                    .account(AccountService.Parser.toAccountGetResponse(account))
+                    .created(customer.getCreated())
+                    .updated(customer.getUpdated())
+                    .build();
+        }
+
+        public static CustomerRegisterResponse toCustomerRegisterResponse(Customer customer) {
+            final Account account = customer.getAccount();
+
+            return CustomerRegisterResponse.builder()
+                    .id(customer.getId())
+                    .firstName(customer.getFirstName())
+                    .lastName(customer.getLastName())
+                    .accountInfo(AccountService.Parser.toAccountGetResponse(account))
+                    .created(customer.getCreated())
+                    .build();
+        }
     }
 }

@@ -8,8 +8,9 @@ import java.time.OffsetDateTime;
 @Data
 @Builder
 public class CustomerUpdateResponse {
+    private Long id;
+    private String username;
     private String firstName;
     private String lastName;
-    private String password;
     private OffsetDateTime updated;
 }

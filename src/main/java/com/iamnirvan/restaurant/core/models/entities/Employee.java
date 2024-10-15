@@ -19,6 +19,6 @@ public class Employee extends DateTimeWithoutUser {
     private Long id;
     private String firstName;
     private String lastName;
-    private String username;
-    private String password;
+    @OneToOne(cascade = CascadeType.REMOVE)
+    private Account account;
 }

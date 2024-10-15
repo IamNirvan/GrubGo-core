@@ -20,7 +20,7 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.getCustomers(id));
     }
 
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<?> createCustomer(@Valid @RequestBody CustomerCreateRequest request) {
         return ResponseEntity.ok(customerService.registerCustomer(request));
     }
