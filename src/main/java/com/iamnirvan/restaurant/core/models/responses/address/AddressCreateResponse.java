@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class AddressCreateResponse {
+    private Long id;
     private String province;
     private String city;
     private String streetName;

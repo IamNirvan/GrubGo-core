@@ -10,8 +10,6 @@ import java.time.OffsetDateTime;
 public class PortionGetResponse {
     private Long id;
     private String name;
-    private String createdBy;
     private OffsetDateTime created;
-    private String updatedBy;
     private OffsetDateTime updated;
 }

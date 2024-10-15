@@ -1,6 +1,6 @@
 package com.iamnirvan.restaurant.core.controllers;
 
-import com.iamnirvan.restaurant.core.models.requests.customer.CustomerCreateRequest;
+import com.iamnirvan.restaurant.core.models.requests.customer.CustomerRegisterRequest;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerUpdateRequest;
 import com.iamnirvan.restaurant.core.services.ICustomerService;
 import jakarta.validation.Valid;
@@ -20,12 +20,12 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.getCustomers(id));
     }
 
-    @PostMapping
-    public ResponseEntity<?> createCustomer(@Valid @RequestBody CustomerCreateRequest request) {
-        return ResponseEntity.ok(customerService.createCustomer(request));
+    @PostMapping("/register")
+    public ResponseEntity<?> createCustomer(@Valid @RequestBody CustomerRegisterRequest request) {
+        return ResponseEntity.ok(customerService.registerCustomer(request));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<?> updateCustomer(@PathVariable("id") Long id, @Valid @RequestBody CustomerUpdateRequest request) {
         return ResponseEntity.ok(customerService.updateCustomer(id, request));
     }

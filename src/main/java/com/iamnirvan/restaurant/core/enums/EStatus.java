@@ -1,7 +1,8 @@
 package com.iamnirvan.restaurant.core.enums;
 
 public enum EStatus {
-    DELIVERED,
+    COMPLETED,
     IN_PROGRESS,
-    CANCELLED
+    CANCELLED,
+    PAID
 }

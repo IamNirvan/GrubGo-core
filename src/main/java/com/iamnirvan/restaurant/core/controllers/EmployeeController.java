@@ -1,6 +1,6 @@
 package com.iamnirvan.restaurant.core.controllers;
 
-import com.iamnirvan.restaurant.core.models.requests.employee.EmployeeCreateRequest;
+import com.iamnirvan.restaurant.core.models.requests.employee.EmployeeRegisterRequest;
 import com.iamnirvan.restaurant.core.models.requests.employee.EmployeeUpdateRequest;
 import com.iamnirvan.restaurant.core.services.IEmployeeService;
 import jakarta.validation.Valid;
@@ -20,12 +20,12 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAllEmployees(id));
     }
 
-    @PostMapping
-    public ResponseEntity<?> createEmployee(@Valid @RequestBody EmployeeCreateRequest request) {
-        return ResponseEntity.ok(employeeService.createEmployee(request));
+    @PostMapping("/register")
+    public ResponseEntity<?> createEmployee(@Valid @RequestBody EmployeeRegisterRequest request) {
+        return ResponseEntity.ok(employeeService.registerEmployee(request));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<?> updateEmployee(@PathVariable("id") Long id, @Valid @RequestBody EmployeeUpdateRequest request) {
         return ResponseEntity.ok(employeeService.updateEmployee(id, request));
     }

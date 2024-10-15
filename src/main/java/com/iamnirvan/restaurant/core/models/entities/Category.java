@@ -5,15 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
+@Deprecated
 @Table(name = "category")
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@SuperBuilder
 @SequenceGenerator(name = "category_sequence", sequenceName = "category_sequence", allocationSize = 1)
 public class Category extends DateTimeWithUser {
     @Id

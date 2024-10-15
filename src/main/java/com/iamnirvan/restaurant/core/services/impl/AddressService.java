@@ -8,6 +8,7 @@ import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateReques
 import com.iamnirvan.restaurant.core.models.requests.address.AddressUpdateRequest;
 import com.iamnirvan.restaurant.core.models.responses.address.AddressCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.address.AddressDeleteResponse;
+import com.iamnirvan.restaurant.core.models.responses.address.AddressGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.address.AddressUpdateResponse;
 import com.iamnirvan.restaurant.core.repositories.AddressRepository;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
@@ -36,11 +37,17 @@ public class AddressService implements IAddressService {
             Customer customer = customerRepository.findById(request.getCustomerId()).orElseThrow(() ->
                     new NotFoundException(String.format("Customer with id %s does not exist", request.getCustomerId())));
 
+            Address mainAddress = addressRepository.getMainAddress(customer.getId());
+            if (mainAddress != null && request.isMain()) {
+                throw new BadRequestException("Main address already exists for this customer");
+            }
+
             Address address = Address.builder()
                     .city(request.getCity())
                     .province(request.getProvince())
                     .street(request.getStreet())
                     .buildingNumber(request.getBuildingNumber())
+                    .isMain(mainAddress == null)
                     .customer(customer)
                     .created(OffsetDateTime.now())
                     .build();
@@ -48,6 +55,7 @@ public class AddressService implements IAddressService {
             log.debug(String.format("Address created: %s", address));
 
             result.add(AddressCreateResponse.builder()
+                    .id(address.getId())
                     .province(address.getProvince())
                     .city(address.getCity())
                     .streetName(address.getStreet())
@@ -94,6 +102,14 @@ public class AddressService implements IAddressService {
                 address.setBuildingNumber(request.getBuildingNumber());
             }
 
+            if (request.getIsMain() != null) {
+                Long customerId = address.getCustomer().getId();
+                Address mainAddress = addressRepository.getMainAddress(customerId);
+                mainAddress.setMain(false);
+                addressRepository.save(mainAddress);
+                address.setMain(true);
+            }
+
             address.setUpdated(OffsetDateTime.now());
             addressRepository.save(address);
             log.debug(String.format("Address updated: %s", address));
@@ -132,17 +148,19 @@ public class AddressService implements IAddressService {
     }
 
     @Override
-    public List<Address> getAddresses(Long id, Long customerId) {
+    public List<AddressGetResponse> getAddresses(Long id, Long customerId) {
         if (id != null) {
-            Address address = addressRepository.findById(id).orElseThrow(() ->
+            AddressGetResponse address = addressRepository.findAddressById(id).orElseThrow(() ->
                     new NotFoundException((String.format("Address with id %s does not exist", id))));
             return List.of(address);
-        } else if (customerId != null) {
+        }
+
+        if (customerId != null) {
             if (customerRepository.findById(customerId).isEmpty()) {
                 throw new NotFoundException(String.format("Customer with id %s does not exist", customerId));
             }
-            return addressRepository.findAddressByCustomerId(customerId);
+            return addressRepository.findAllAddressesByCustomerId(customerId);
         }
-        return addressRepository.findAll();
+        return null;
     }
 }

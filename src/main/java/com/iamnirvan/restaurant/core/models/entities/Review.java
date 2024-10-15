@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * Represents a review of a dish by a customer. A review contains a title, content, rating, dish and customer
+ * */
 @Table(name = "review")
 @Entity
 @Getter

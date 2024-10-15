@@ -1,12 +1,15 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
+/**
+ * Represents a customer in the system. A customer is linked with his/her own cart, reviews, addresses
+ * and allergens
+ * */
 @Table(name = "customer")
 @Entity
 @Getter
@@ -22,18 +25,18 @@ public class Customer extends DateTimeWithoutUser {
     private Long id;
     private String firstName;
     private String lastName;
-    private String username;
-    private String password;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @ToString.Exclude
     private Set<CustomerAllergen> allergens;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @ToString.Exclude
     private Set<Address> addresses;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ToString.Exclude
     private Set<Review> reviews;
-    @OneToOne(mappedBy = "customer", fetch = FetchType.EAGER)
-    private Cart cart;
     @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<FoodOrder> foodOrders;
+    @ToString.Exclude
+    private Set<Cart> cart;
+    @OneToOne(cascade = CascadeType.REMOVE)
+    private Account account;
 }

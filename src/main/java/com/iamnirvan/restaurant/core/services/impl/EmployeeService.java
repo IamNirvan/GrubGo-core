@@ -1,77 +1,104 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
-import com.iamnirvan.restaurant.core.enums.EDesignation;
 import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
+import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
+import com.iamnirvan.restaurant.core.models.entities.Account;
 import com.iamnirvan.restaurant.core.models.entities.Employee;
-import com.iamnirvan.restaurant.core.models.requests.employee.EmployeeCreateRequest;
+import com.iamnirvan.restaurant.core.models.requests.employee.EmployeeRegisterRequest;
 import com.iamnirvan.restaurant.core.models.requests.employee.EmployeeUpdateRequest;
-import com.iamnirvan.restaurant.core.models.responses.employee.EmployeeCreateResponse;
+import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
+import com.iamnirvan.restaurant.core.models.responses.employee.EmployeeGetResponse;
+import com.iamnirvan.restaurant.core.models.responses.employee.EmployeeRegisterResponse;
 import com.iamnirvan.restaurant.core.models.responses.employee.EmployeeDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.employee.EmployeeUpdateResponse;
 import com.iamnirvan.restaurant.core.repositories.EmployeeRepository;
+import com.iamnirvan.restaurant.core.repositories.RoleRepository;
 import com.iamnirvan.restaurant.core.services.IEmployeeService;
-import com.iamnirvan.restaurant.core.util.PasswordVerification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class EmployeeService implements IEmployeeService {
     private final EmployeeRepository employeeRepository;
-    private final PasswordVerification passwordVerification;
+    private final AccountService accountService;
+    private final RoleRepository roleRepository;
 
+    /**
+     * Registers a new employee.
+     *
+     * @param request the employee creation request containing employee details
+     * @return the response containing the created employee's details
+     * @throws ConflictException if there is a conflict while creating the account
+     * @throws NotFoundException if the role specified in the request is not found
+     * @throws BadRequestException if an error occurs while creating the account
+     */
     @Override
-    public EmployeeCreateResponse createEmployee(EmployeeCreateRequest request) {
-
-        if (employeeRepository.existsByUsername(request.getUsername())) {
-            throw new BadRequestException("Username already exists");
-        }
-
-        if (!passwordVerification.verifyPassword(request.getPassword())) {
-            throw new BadRequestException("Password must contain at least 8 characters, one uppercase letter," +
-                    " one lowercase letter, one number and one special character");
+    @Transactional
+    public EmployeeRegisterResponse registerEmployee(EmployeeRegisterRequest request) {
+        Account account;
+        try {
+            final AccountCreateRequest createRequest = new AccountCreateRequest();
+            createRequest.setUsername(request.getUsername());
+            createRequest.setPassword(request.getPassword());
+            createRequest.setRoleId(roleRepository.findByName("ADMIN").getId());
+            account = accountService.createAccount(createRequest);
+        } catch (ConflictException | NotFoundException e) {
+            log.error(e);
+            throw e;
+        } catch (Exception e) {
+            log.error(e);
+            throw new BadRequestException("An error occurred while creating account");
         }
 
         Employee employee = Employee.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .username(request.getUsername())
-                .password(request.getPassword())
-                .designation(EDesignation.ADMIN)
+                .account(account)
                 .created(OffsetDateTime.now())
                 .build();
 
         employeeRepository.save(employee);
-        log.debug(String.format("Employee created: %s", employee));
+        log.debug("Employee created: {}", employee);
 
-        return EmployeeCreateResponse.builder()
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .username(employee.getUsername())
-                .password(employee.getPassword())
-                .created(employee.getCreated())
-                .build();
+        return Parser.toEmployeeRegisterResponse(employee);
     }
 
+    /**
+     * Updates an existing employee.
+     *
+     * @param id the ID of the employee to update
+     * @param request the employee update request containing updated details
+     * @return the response containing the updated employee's details
+     * @throws NotFoundException if the employee with the specified ID does not exist
+     * @throws BadRequestException if an error occurs while updating the account or if the first name or last name is empty
+     */
     @Override
     @Transactional
     public EmployeeUpdateResponse updateEmployee(Long id, EmployeeUpdateRequest request) {
         Employee employee = employeeRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(String.format("Employee with id %s does not exist", id)));
 
-        if (request.getPassword() != null) {
-            if (!passwordVerification.verifyPassword(request.getPassword())) {
-                throw new BadRequestException("Password must contain at least 8 characters, one uppercase letter," +
-                        " one lowercase letter, one number and one special character");
+        // Update the account information
+        try {
+            if (request.getAccountInfo() != null) {
+                accountService.updateAccount(employee.getAccount().getId(), request.getAccountInfo());
             }
-            employee.setPassword(request.getPassword());
+        } catch (ConflictException | NotFoundException e) {
+            log.error(e);
+            throw e;
+        } catch (Exception e) {
+            log.error(e);
+            throw new BadRequestException("An error occurred while updating the account");
         }
 
         if (request.getFirstName() != null) {
@@ -90,40 +117,84 @@ public class EmployeeService implements IEmployeeService {
 
         employee.setUpdated(OffsetDateTime.now());
         employeeRepository.save(employee);
-        log.debug(String.format("Employee updated: %s", employee));
+        log.debug("Employee updated: {}", employee);
 
-        return EmployeeUpdateResponse.builder()
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .password(employee.getPassword())
-                .updated(employee.getUpdated())
-                .build();
+        return Parser.toEmployeeUpdateResponse(employee);
     }
 
+    /**
+     * Deletes an existing employee.
+     *
+     * @param id the ID of the employee to delete
+     * @return the response containing the deleted employee's details
+     * @throws NotFoundException if the employee with the specified ID does not exist
+     */
     @Override
     public EmployeeDeleteResponse deleteEmployee(Long id) {
         Employee employee = employeeRepository.findById(id).orElseThrow(() ->
                 new NotFoundException((String.format("Employee with id %s does not exist", id))));
 
         employeeRepository.delete(employee);
-        log.debug(String.format("Employee deleted: %s", employee));
+        log.debug("Employee deleted: {}", employee);
 
-        return EmployeeDeleteResponse.builder()
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .username(employee.getUsername())
-                .designation(employee.getDesignation())
-                .build();
+        return Parser.toEmployeeDeleteResponse(employee);
     }
 
+    /**
+     * Retrieves a list of employees or a specific employee by ID.
+     *
+     * @param id the ID of the employee to retrieve (optional)
+     * @return a list of employee responses
+     * @throws NotFoundException if the employee with the specified ID does not exist
+     */
     @Override
-    public List<Employee> getAllEmployees(Long id) {
+    public List<EmployeeGetResponse> getAllEmployees(Long id) {
         if (id != null) {
             Employee employee = employeeRepository.findById(id).orElseThrow(() ->
                     new NotFoundException((String.format("Employee with id %s does not exist", id))));
-            return List.of(employee);
+            return List.of(Parser.toEmployeeGetResponse(employee));
         }
-        return employeeRepository.findAll();
+        return employeeRepository.findAll().stream().map(Parser::toEmployeeGetResponse).collect(Collectors.toList());
     }
 
+    public static class Parser {
+        public static EmployeeUpdateResponse toEmployeeUpdateResponse(@NotNull Employee employee) {
+            return EmployeeUpdateResponse.builder()
+                    .id(employee.getId())
+                    .firstName(employee.getFirstName())
+                    .lastName(employee.getLastName())
+                    .accountInfo(AccountService.Parser.toAccountUpdateResponse(employee.getAccount()))
+                    .updated(employee.getUpdated())
+                    .build();
+        }
+
+        public static EmployeeRegisterResponse toEmployeeRegisterResponse(@NotNull Employee employee) {
+            return EmployeeRegisterResponse.builder()
+                    .id(employee.getId())
+                    .firstName(employee.getFirstName())
+                    .lastName(employee.getLastName())
+                    .accountInfo(AccountService.Parser.toAccountGetResponse(employee.getAccount()))
+                    .created(employee.getCreated())
+                    .build();
+        }
+
+        public static EmployeeDeleteResponse toEmployeeDeleteResponse(@NotNull Employee employee) {
+            return EmployeeDeleteResponse.builder()
+                    .id(employee.getId())
+                    .firstName(employee.getFirstName())
+                    .lastName(employee.getLastName())
+                    .build();
+        }
+
+        public static EmployeeGetResponse toEmployeeGetResponse(@NotNull Employee employee) {
+            return EmployeeGetResponse.builder()
+                    .id(employee.getId())
+                    .firstName(employee.getFirstName())
+                    .lastName(employee.getLastName())
+                    .accountInfo(AccountService.Parser.toAccountGetResponse(employee.getAccount()))
+                    .created(employee.getCreated())
+                    .updated(employee.getUpdated())
+                    .build();
+        }
+    }
 }

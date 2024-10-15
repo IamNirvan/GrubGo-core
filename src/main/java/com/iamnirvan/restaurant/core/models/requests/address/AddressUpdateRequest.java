@@ -13,4 +13,5 @@ public class AddressUpdateRequest {
     private String province;
     private String street;
     private String buildingNumber;
+    private Boolean isMain;
 }

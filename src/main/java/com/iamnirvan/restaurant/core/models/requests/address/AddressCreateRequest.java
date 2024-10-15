@@ -18,4 +18,5 @@ public class AddressCreateRequest {
     @NotNull(message = "a valid customer id is required")
     @Min(value = 1, message = "invalid customer id")
     private Long customerId;
+    private boolean isMain;
 }
