@@ -6,7 +6,7 @@ import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.entities.*;
 import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequestWithoutCustomer;
-import com.iamnirvan.restaurant.core.models.requests.customer.CustomerCreateRequest;
+import com.iamnirvan.restaurant.core.models.requests.customer.CustomerRegisterRequest;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerUpdateRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerRegisterResponse;
@@ -14,9 +14,9 @@ import com.iamnirvan.restaurant.core.models.responses.customer.CustomerDeleteRes
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerUpdateResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.AccountUpdateResponse;
-import com.iamnirvan.restaurant.core.repositories.AccountRepository;
 import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
+import com.iamnirvan.restaurant.core.repositories.RoleRepository;
 import com.iamnirvan.restaurant.core.services.ICustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -37,6 +37,7 @@ public class CustomerService implements ICustomerService {
     private final CustomerRepository customerRepository;
     private final CartRepository cartRepository;
     private final AccountService accountService;
+    private final RoleRepository roleRepository;
 
     /**
      * Registers a new customer.
@@ -48,14 +49,14 @@ public class CustomerService implements ICustomerService {
      */
     @Override
     @Transactional
-    public CustomerRegisterResponse registerCustomer(@NotNull CustomerCreateRequest request) {
+    public CustomerRegisterResponse registerCustomer(@NotNull CustomerRegisterRequest request) {
         // First create the customer's account
         Account account = null;
         try {
             AccountCreateRequest accountCreateRequest = new AccountCreateRequest();
             accountCreateRequest.setPassword(request.getPassword());
             accountCreateRequest.setUsername(request.getUsername());
-            accountCreateRequest.setRoleId(request.getRoleId());
+            accountCreateRequest.setRoleId(roleRepository.findByName("CUSTOMER").getId());
             account = accountService.createAccount(accountCreateRequest);
         } catch (ConflictException | NotFoundException ex) {
             log.error("Error creating user", ex);
@@ -144,7 +145,7 @@ public class CustomerService implements ICustomerService {
      */
     @Override
     @Transactional
-    public CustomerUpdateResponse updateCustomer(Long id, CustomerUpdateRequest request) {
+    public CustomerUpdateResponse updateCustomer(Long id, @NotNull CustomerUpdateRequest request) {
         Customer customer = customerRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(String.format("Customer with id %s does not exist", id)));
 
@@ -188,17 +189,13 @@ public class CustomerService implements ICustomerService {
      */
     @Override
     public CustomerDeleteResponse deleteCustomer(Long id) {
-        Customer employee = customerRepository.findById(id).orElseThrow(() ->
+        Customer customer = customerRepository.findById(id).orElseThrow(() ->
                 new NotFoundException((String.format("Customer with id %s does not exist", id))));
 
-        customerRepository.delete(employee);
-        log.debug("Customer deleted: {}", employee);
+        customerRepository.delete(customer);
+        log.debug("Customer deleted: {}", customer);
 
-        return CustomerDeleteResponse.builder()
-                .id(employee.getId())
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .build();
+        return Parser.toCustomerDeleteResponse(customer);
     }
 
     /**
@@ -220,7 +217,7 @@ public class CustomerService implements ICustomerService {
 
 
     public static class Parser {
-        public static CustomerUpdateResponse toCustomerUpdateResponse(Customer customer) {
+        public static CustomerUpdateResponse toCustomerUpdateResponse(@NotNull Customer customer) {
             final Account account = customer.getAccount();
 
             return CustomerUpdateResponse.builder()
@@ -232,7 +229,7 @@ public class CustomerService implements ICustomerService {
                     .build();
         }
 
-        public static CustomerGetResponse toCustomerGetResponse(Customer customer) {
+        public static CustomerGetResponse toCustomerGetResponse(@NotNull Customer customer) {
             final Account account = customer.getAccount();
 
             return CustomerGetResponse.builder()
@@ -245,7 +242,7 @@ public class CustomerService implements ICustomerService {
                     .build();
         }
 
-        public static CustomerRegisterResponse toCustomerRegisterResponse(Customer customer) {
+        public static CustomerRegisterResponse toCustomerRegisterResponse(@NotNull Customer customer) {
             final Account account = customer.getAccount();
 
             return CustomerRegisterResponse.builder()
@@ -254,6 +251,14 @@ public class CustomerService implements ICustomerService {
                     .lastName(customer.getLastName())
                     .accountInfo(AccountService.Parser.toAccountGetResponse(account))
                     .created(customer.getCreated())
+                    .build();
+        }
+
+        public static CustomerDeleteResponse toCustomerDeleteResponse(@NotNull Customer customer) {
+            return CustomerDeleteResponse.builder()
+                    .id(customer.getId())
+                    .firstName(customer.getFirstName())
+                    .lastName(customer.getLastName())
                     .build();
         }
     }

@@ -1,16 +1,14 @@
 package com.iamnirvan.restaurant.core.models.requests.customer;
 
 import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateRequestWithoutCustomer;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class CustomerCreateRequest {
+public class CustomerRegisterRequest {
     @NotBlank(message = "a valid username is required")
     private String username;
     @NotBlank
@@ -20,9 +18,6 @@ public class CustomerCreateRequest {
                     "one digit, one special character, and must be at least 8 characters long"
     )
     private String password;
-    @NotNull(message = "role id is required")
-    @Min(value = 1, message = "role id must be greater than 0")
-    private Long roleId;
     @NotBlank(message = "first name is required")
     private String firstName;
     @NotBlank(message = "last name is required")

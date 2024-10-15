@@ -33,10 +33,6 @@ public class AccountService implements IAccountService {
         final Roles role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new NotFoundException("Role not found"));
 
-        if (role.getName().equalsIgnoreCase("admin")) {
-            throw new ConflictException("Cannot create an admin user");
-        }
-
         Account account = Account.builder()
                 .roles(role)
                 .username(request.getUsername())
