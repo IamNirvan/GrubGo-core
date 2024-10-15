@@ -17,6 +17,7 @@ import com.iamnirvan.restaurant.core.repositories.DishPortionRepository;
 import com.iamnirvan.restaurant.core.services.ICartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +26,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Log4j2
 public class CartService implements ICartService {
     private final CartRepository cartRepository;
     private final DishPortionRepository dishPortionRepository;
-    private final DishPortionCartRepository dishPortionCartRepository;
+    private static DishPortionCartRepository dishPortionCartRepository;
+
+    @Autowired
+    public CartService(CartRepository cartRepository, DishPortionRepository dishPortionRepository, DishPortionCartRepository dpcRepository) {
+        this.cartRepository = cartRepository;
+        this.dishPortionRepository = dishPortionRepository;
+        dishPortionCartRepository = dpcRepository;
+    }
 
     /**
      * Manipulates the content of the cart by adding or updating dish portions.
@@ -88,6 +95,10 @@ public class CartService implements ICartService {
             } else {
                 dishPortionCartRepository.save(dishPortionCart);
             }
+
+            double totalValue = Util.calculateCartTotalValue(cart);
+            cart.setTotalValue(totalValue);
+            cartRepository.save(cart);
             log.debug("Updated contents of the cart");
 
             result.add(Parser.toAddDishIntoCartResponse(cart, dishPortion, request.getQuantity()));
@@ -149,6 +160,7 @@ public class CartService implements ICartService {
         public static AddDishIntoCartResponse toAddDishIntoCartResponse(Cart cart, DishPortion dishPortion, int quantity) {
             return AddDishIntoCartResponse.builder()
                     .cartId(cart.getId())
+                    .totalValue(cart.getTotalValue())
                     .dishPortion(DishPortionGetResponse.builder()
                             .dishName(dishPortion.getDish().getName())
                             .portionName(dishPortion.getPortion().getName())
@@ -172,6 +184,13 @@ public class CartService implements ICartService {
                     .price(dishPortion.getPrice())
                     .quantity(quantity)
                     .build();
+        }
+    }
+
+    public static class Util {
+        public static double calculateCartTotalValue(Cart cart) {
+            List<DishPortionCart> cartContents = dishPortionCartRepository.findAllByCartId(cart.getId());
+            return cartContents.stream().mapToDouble(cartContent -> cartContent.getDishPortion().getPrice() * cartContent.getQuantity()).sum();
         }
     }
 }

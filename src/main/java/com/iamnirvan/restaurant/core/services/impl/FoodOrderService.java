@@ -9,11 +9,13 @@ import com.iamnirvan.restaurant.core.models.entities.DishPortionCart;
 import com.iamnirvan.restaurant.core.models.entities.FoodOrder;
 import com.iamnirvan.restaurant.core.models.requests.food_order.FoodOrderCreateRequest;
 import com.iamnirvan.restaurant.core.models.responses.food_order.FoodOrderCreateResponse;
+import com.iamnirvan.restaurant.core.models.responses.food_order.FoodOrderGetResponse;
 import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.FoodOrderRepository;
 import com.iamnirvan.restaurant.core.services.IFoodOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,16 +48,10 @@ public class FoodOrderService implements IFoodOrderService {
             Cart cart = cartRepository.findById(request.getCartId())
                     .orElseThrow(() -> new NotFoundException(String.format("Cart with id %d does not exist", request.getCartId())));
 
-            // TODO: get the total from the cart's total value field (needs to be added. represents the cost of all items in the cart + taxes, etc..)
-            double total = 0;
-            for (DishPortionCart dishPortionCart : cart.getDishPortionCarts()) {
-                total += (dishPortionCart.getDishPortion().getPrice() * dishPortionCart.getQuantity());
-            }
-
             FoodOrder foodOrder = FoodOrder.builder()
                     .notes(request.getNotes())
                     .status(EStatus.IN_PROGRESS)
-                    .total(total)
+                    .total(cart.getTotalValue())
                     .date(OffsetDateTime.now())
                     .cart(cart)
                     .build();
@@ -62,7 +59,7 @@ public class FoodOrderService implements IFoodOrderService {
             foodOrderRepository.save(foodOrder);
             cart.setFoodOrder(foodOrder);
             cartRepository.save(cart);
-            log.debug(String.format("Created order: %s", foodOrder));
+            log.debug("Created order: {}", foodOrder);
 
             // Deactivate the old cart
             cart.setStatus(EActiveStatus.INACTIVE);
@@ -89,12 +86,38 @@ public class FoodOrderService implements IFoodOrderService {
         return result;
     }
 
+    @Override
+    public List<FoodOrderGetResponse> getOrders(Long id, Long customerId) {
+
+        if (id != null) {
+            FoodOrder foodOrder = foodOrderRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundException(String.format("Order with id %d does not exist", id)));
+            return List.of(Parser.toFoodOrderGetResponse(foodOrder));
+        }
+
+        if (customerId != null) {
+            return foodOrderRepository.findAllByCustomerIdOrderByDateAsc(customerId).stream().map(Parser::toFoodOrderGetResponse).collect(Collectors.toList());
+        }
+
+        return foodOrderRepository.findAllOrderByDateAsc().stream().map(Parser::toFoodOrderGetResponse).collect(Collectors.toList());
+    }
+
     public static class Parser {
-        public static FoodOrderCreateResponse toFoodOrderCreateResponse(FoodOrder foodOrder) {
+        public static FoodOrderCreateResponse toFoodOrderCreateResponse(@NotNull FoodOrder foodOrder) {
             return FoodOrderCreateResponse.builder()
                     .id(foodOrder.getId())
                     .notes(foodOrder.getNotes())
                     .cartId(foodOrder.getCart().getId())
+                    .status(foodOrder.getStatus())
+                    .total(foodOrder.getTotal())
+                    .date(foodOrder.getDate())
+                    .build();
+        }
+
+        public static FoodOrderGetResponse toFoodOrderGetResponse(@NotNull FoodOrder foodOrder) {
+            return FoodOrderGetResponse.builder()
+                    .id(foodOrder.getId())
+                    .notes(foodOrder.getNotes())
                     .status(foodOrder.getStatus())
                     .total(foodOrder.getTotal())
                     .date(foodOrder.getDate())

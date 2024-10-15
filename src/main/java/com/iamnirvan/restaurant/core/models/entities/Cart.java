@@ -22,6 +22,7 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cart_sequence")
     private Long id;
+    private Double totalValue;
     @Enumerated(EnumType.STRING)
     private EActiveStatus status;
     @ManyToOne(fetch = FetchType.LAZY)

@@ -8,5 +8,6 @@ import lombok.Data;
 @Builder
 public class AddDishIntoCartResponse {
     private Long cartId;
+    private double totalValue;
     private DishPortionGetResponse dishPortion;
 }

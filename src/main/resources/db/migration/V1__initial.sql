@@ -164,6 +164,7 @@ CREATE SEQUENCE IF NOT EXISTS cart_sequence START WITH 1 INCREMENT BY 1;
 CREATE TABLE cart
 (
     id          BIGINT NOT NULL,
+    total_value DOUBLE PRECISION,
     status      VARCHAR(255),
     customer_id BIGINT,
     CONSTRAINT pk_cart PRIMARY KEY (id)
