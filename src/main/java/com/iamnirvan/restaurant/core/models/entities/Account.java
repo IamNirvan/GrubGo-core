@@ -18,7 +18,7 @@ public class Account {
     private String username;
     private String password;
     private Boolean active;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @ToString.Exclude
     private Roles roles;
 }

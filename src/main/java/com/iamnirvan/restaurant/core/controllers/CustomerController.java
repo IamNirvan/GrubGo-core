@@ -5,8 +5,12 @@ import com.iamnirvan.restaurant.core.models.requests.customer.CustomerUpdateRequ
 import com.iamnirvan.restaurant.core.services.ICustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -16,7 +20,7 @@ public class CustomerController {
     private final ICustomerService customerService;
 
     @GetMapping
-    public ResponseEntity<?> getCustomers(@RequestParam(value = "id", required = false) Long id) {
+    public ResponseEntity<?> getCustomers(@RequestParam(value = "id", required = false) Long id, Principal principal) {
         return ResponseEntity.ok(customerService.getCustomers(id));
     }
 
