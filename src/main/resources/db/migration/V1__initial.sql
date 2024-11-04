@@ -231,3 +231,21 @@ CREATE TABLE employee
 ALTER TABLE employee
     ADD CONSTRAINT FK_EMPLOYEE_ON_ACCOUNT FOREIGN KEY (account_id) REFERENCES account (id);
 -- END OF EMPLOYEE
+
+-- START OF RULES
+CREATE SEQUENCE IF NOT EXISTS rules_sequence START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE rules
+(
+    id        BIGINT NOT NULL,
+    created   TIMESTAMP WITH TIME ZONE,
+    updated   TIMESTAMP WITH TIME ZONE,
+    rule_name VARCHAR(255),
+    fact      VARCHAR(255),
+    rule      TEXT,
+    CONSTRAINT pk_rules PRIMARY KEY (id)
+);
+
+ALTER TABLE rules
+    ADD CONSTRAINT uc_rules_rulename UNIQUE (rule_name);
+-- END OF RULES

@@ -1,6 +1,7 @@
 package com.iamnirvan.restaurant.core.services;
 
 import com.iamnirvan.restaurant.core.models.entities.Account;
+import com.iamnirvan.restaurant.core.models.requests.login.LoginRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountUpdateRequest;
 import com.iamnirvan.restaurant.core.models.responses.user.UserDeleteResponse;
@@ -15,4 +16,5 @@ public interface IAccountService {
     AccountUpdateResponse updateAccount(Long id, AccountUpdateRequest request);
     AccountGetResponse getAccount(Long id);
     UserDeleteResponse deleteAccount(Long id);
+    String login(LoginRequest loginRequest);
 }

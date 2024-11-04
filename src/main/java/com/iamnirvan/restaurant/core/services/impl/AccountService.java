@@ -2,27 +2,55 @@ package com.iamnirvan.restaurant.core.services.impl;
 
 import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
+import com.iamnirvan.restaurant.core.models.TokenPayload;
 import com.iamnirvan.restaurant.core.models.entities.*;
+import com.iamnirvan.restaurant.core.models.requests.login.LoginRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountUpdateRequest;
+import com.iamnirvan.restaurant.core.models.responses.customer.CustomerTokenDataGetResponse;
+import com.iamnirvan.restaurant.core.models.responses.employee.EmployeeTokenDataGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.UserDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.AccountGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.AccountUpdateResponse;
+import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
+import com.iamnirvan.restaurant.core.repositories.EmployeeRepository;
 import com.iamnirvan.restaurant.core.repositories.RoleRepository;
 import com.iamnirvan.restaurant.core.repositories.AccountRepository;
 import com.iamnirvan.restaurant.core.services.IAccountService;
+import com.iamnirvan.restaurant.core.util.JwtUtil;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Log4j2
 public class AccountService implements IAccountService {
+    private final EmployeeRepository employeeRepository;
+    private final CustomerRepository customerRepository;
     private final AccountRepository accountRepository;
     private final RoleRepository roleRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
+    @Autowired
+    public AccountService(AccountRepository accountRepository, RoleRepository roleRepository, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
+                          CustomerRepository customerRepository,
+                          EmployeeRepository employeeRepository) {
+        this.accountRepository = accountRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder(10);
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        this.customerRepository = customerRepository;
+        this.employeeRepository = employeeRepository;
+    }
 
     @Override
     public Account createAccount(@NotNull AccountCreateRequest request) {
@@ -36,7 +64,7 @@ public class AccountService implements IAccountService {
         Account account = Account.builder()
                 .roles(role)
                 .username(request.getUsername())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .active(true)
                 .build();
 
@@ -89,6 +117,44 @@ public class AccountService implements IAccountService {
         log.debug("Deleted user: {}", account);
 
         return Parser.toAccountDeleteResponse(account);
+    }
+
+    @Override
+    public String login(LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+        );
+
+        if (authentication.isAuthenticated()) {
+            Account account = accountRepository.findAccountByUsername(loginRequest.getUsername()).orElseThrow(
+                    () -> new NotFoundException("User not found")
+            );
+
+            Object userDetails = null;
+            CustomerTokenDataGetResponse customer = customerRepository.findCustomerByAccountId(account.getId());
+            if (customer != null) {
+                userDetails = customer;
+            }
+            else {
+                EmployeeTokenDataGetResponse employee = employeeRepository.findEmployeeByAccountId(account.getId());
+                if (employee != null) {
+                    userDetails = employee;
+                }
+            }
+
+            if (userDetails == null) {
+                throw new NotFoundException("User not found");
+            }
+
+//            return jwtUtil.generateToken(loginRequest.getUsername());
+            TokenPayload principal = TokenPayload.builder()
+                    .account(AccountService.Parser.toAccountGetResponse(account))
+                    .userDetails(userDetails)
+                    .build();
+
+            return jwtUtil.generateToken(loginRequest.getUsername(), principal);
+        }
+        return null;
     }
 
     public static class Parser {
