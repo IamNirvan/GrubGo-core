@@ -16,5 +16,6 @@ public interface IAccountService {
     AccountUpdateResponse updateAccount(Long id, AccountUpdateRequest request);
     AccountGetResponse getAccount(Long id);
     UserDeleteResponse deleteAccount(Long id);
-    String login(LoginRequest loginRequest);
+    String customerLogin(LoginRequest loginRequest);
+    String employeeLogin(LoginRequest loginRequest);
 }

@@ -39,7 +39,7 @@ public class SecurityConfig {
 
         // Make sure that every request is authenticated
         http.authorizeHttpRequests(request -> request
-                .requestMatchers("/v1/login", "/v1/customer/register")
+                .requestMatchers("/v1/account/*/login", "/v1/*/register")
                 .permitAll()
                 .anyRequest().authenticated());
 

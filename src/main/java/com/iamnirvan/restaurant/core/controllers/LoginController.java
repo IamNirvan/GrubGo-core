@@ -11,13 +11,17 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1/login")
+@RequestMapping("/v1/account")
 public class LoginController {
     private final AccountService accountService;
 
-    @PostMapping
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest loginRequest) {
-        return new ResponseEntity<>(accountService.login(loginRequest), HttpStatus.OK);
+    @PostMapping("/customer/login")
+    public ResponseEntity<String> customerLogin(@Valid @RequestBody LoginRequest loginRequest) {
+        return new ResponseEntity<>(accountService.customerLogin(loginRequest), HttpStatus.OK);
+    }
 
+    @PostMapping("/employee/login")
+    public ResponseEntity<String> employeeLogin(@Valid @RequestBody LoginRequest loginRequest) {
+        return new ResponseEntity<>(accountService.employeeLogin(loginRequest), HttpStatus.OK);
     }
 }

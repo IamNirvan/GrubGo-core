@@ -32,10 +32,15 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+//        String path = request.getRequestURI();
+//        if (path.startsWith("/restaurant/core/v1/account/employee/login") || path.startsWith("/restaurant/core/v1/account/customer/login")) {
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
+
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
-
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);

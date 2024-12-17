@@ -1,5 +1,6 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
+import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
 import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.TokenPayload;
@@ -120,7 +121,7 @@ public class AccountService implements IAccountService {
     }
 
     @Override
-    public String login(LoginRequest loginRequest) {
+    public String customerLogin(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
         );
@@ -150,6 +151,47 @@ public class AccountService implements IAccountService {
             TokenPayload principal = TokenPayload.builder()
                     .account(AccountService.Parser.toAccountGetResponse(account))
                     .userDetails(userDetails)
+                    .build();
+
+            return jwtUtil.generateToken(loginRequest.getUsername(), principal);
+        }
+        return null;
+    }
+
+
+    public String employeeLogin(LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+        );
+
+        if (authentication.isAuthenticated()) {
+            Account account = accountRepository.findAccountByUsername(loginRequest.getUsername()).orElseThrow(
+                    () -> new NotFoundException("User not found")
+            );
+
+//            Object userDetails = null;
+//            CustomerTokenDataGetResponse customer = customerRepository.findCustomerByAccountId(account.getId());
+//            if (customer != null) {
+//                userDetails = customer;
+//            }
+//            else {
+//                EmployeeTokenDataGetResponse employee = employeeRepository.findEmployeeByAccountId(account.getId());
+//                if (employee != null) {
+//                    userDetails = employee;
+//                }
+//            }
+
+//            if (userDetails == null) {
+//                throw new NotFoundException("User not found");
+//            }
+            EmployeeTokenDataGetResponse employee = employeeRepository.findEmployeeByAccountId(account.getId());
+            if (employee == null) {
+                throw new BadRequestException("Only employees can login here");
+            }
+
+            TokenPayload principal = TokenPayload.builder()
+                    .account(AccountService.Parser.toAccountGetResponse(account))
+                    .userDetails(employee)
                     .build();
 
             return jwtUtil.generateToken(loginRequest.getUsername(), principal);
