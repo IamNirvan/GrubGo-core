@@ -6,6 +6,7 @@ import com.iamnirvan.restaurant.core.models.responses.dish.DishCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishUpdateResponse;
+import com.iamnirvan.restaurant.core.models.responses.metrics.DishMetrics;
 
 import java.util.List;
 
@@ -14,4 +15,5 @@ public interface IDishService {
     List<DishUpdateResponse> updateDish(List<DishUpdateRequest> requests);
     List<DishDeleteResponse> deleteDish(List<Long> ids);
     List<DishGetResponse> getDishes(Long id, boolean includeImg);
+    DishMetrics getDishMetrics(Long id);
 }

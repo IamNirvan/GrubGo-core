@@ -41,4 +41,9 @@ public class DishController {
     public ResponseEntity<?> deleteDishes(@RequestParam(value = "ids") List<Long> ids) {
         return new ResponseEntity<>(dishService.deleteDish(ids), HttpStatus.OK);
     }
+
+    @GetMapping("/metrics/{id}")
+    public ResponseEntity<?> getDishMetrics(@PathVariable(value = "id") Long dishId) {
+        return new ResponseEntity<>(dishService.getDishMetrics(dishId), HttpStatus.OK);
+    }
 }

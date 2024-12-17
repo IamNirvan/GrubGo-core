@@ -14,6 +14,9 @@ import com.iamnirvan.restaurant.core.models.responses.dish.DishDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishUpdateResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish_portion.DishPortionGetResponseWithoutDishName;
+import com.iamnirvan.restaurant.core.models.responses.metrics.DishMetrics;
+import com.iamnirvan.restaurant.core.models.responses.metrics.MonthlySales;
+import com.iamnirvan.restaurant.core.models.responses.metrics.UnitsSoldPerMonthProjection;
 import com.iamnirvan.restaurant.core.models.responses.review.ReviewGetResponseWithoutDishId;
 import com.iamnirvan.restaurant.core.repositories.DishRepository;
 import com.iamnirvan.restaurant.core.repositories.PortionRepository;
@@ -27,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -198,6 +204,24 @@ public class DishService implements IDishService {
         return dishRepository.findAll().stream().map(dish -> Parser.toDishGetResponse(dish, includeImg)).collect(Collectors.toList());
     }
 
+    @Override
+    public DishMetrics getDishMetrics(Long id) {
+        dishRepository.findById(id).orElseThrow(
+                () -> new NotFoundException(String.format("Dish with id %s does not exist", id))
+        );
+
+        final LocalDate today = LocalDate.now();
+        final LocalDateTime startDate = today.atTime(LocalTime.MIN);
+        final LocalDateTime endDate = today.atTime(LocalTime.MAX);
+
+        return Parser.toDishStats(
+                dishRepository.getRevenueAccountedFor(id),
+                dishRepository.getUnitsSoldToday(id, startDate.toString(), endDate.toString()),
+                dishRepository.getUnitsSoldThisQuarter(id),
+                dishRepository.getMonthlySalesForDish(id)
+        );
+    }
+
     public static class Parser {
         private static byte[] toCompressedImage(@NotNull MultipartFile file) {
             try {
@@ -267,6 +291,23 @@ public class DishService implements IDishService {
                     .image(decompressedImage)
                     .created(dish.getCreated())
                     .updated(dish.getUpdated())
+                    .build();
+        }
+
+        private static DishMetrics toDishStats(float revenueAccountedFor, long unitsToday, long unitsQuarter, List<UnitsSoldPerMonthProjection> unitsSoldPerMonthProjections) {
+            List<MonthlySales> monthlySales = new ArrayList<>();
+            for (UnitsSoldPerMonthProjection unitsSoldPerMonthProjection : unitsSoldPerMonthProjections) {
+                monthlySales.add(MonthlySales.builder()
+                        .month(unitsSoldPerMonthProjection.getMonth().trim())
+                        .unitsSold(unitsSoldPerMonthProjection.getUnitsSold())
+                        .build());
+            }
+
+            return DishMetrics.builder()
+                    .unitsSoldToday(unitsToday)
+                    .unitsSoldThisQuarter(unitsQuarter)
+                    .revenueAccountedFor(revenueAccountedFor)
+                    .monthlySales(monthlySales)
                     .build();
         }
     }
