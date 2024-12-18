@@ -84,4 +84,22 @@ public interface DishRepository extends JpaRepository<Dish, Long> {
         ORDER BY DATE_TRUNC('month', fo.date)
         """, nativeQuery = true)
     List<UnitsSoldPerMonthProjection> getMonthlySalesForDish(@Param("dishId") Long dishId);
+
+    @Query(value = """
+        select
+            d.id,
+            d.name,
+            d.description,
+            d.image,
+            d.created,
+            d.updated
+        from dish_portion_cart dpc
+        inner join public.cart c on dpc.cart_id = c.id
+        inner join public.customer c2 on c.customer_id = c2.id
+        inner join dish_portion dp on dpc.dish_portion_id = dp.id
+        inner join dish d on dp.dish_id = d.id
+        where c2.id = :customerId and dpc.reviewed = false
+    """, nativeQuery = true)
+    List<Dish> getDishesToBeReviewedByCustomer(@Param("customerId") Long customerId);
+
 }

@@ -9,11 +9,13 @@ import com.iamnirvan.restaurant.core.models.requests.address.AddressCreateReques
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerRegisterRequest;
 import com.iamnirvan.restaurant.core.models.requests.customer.CustomerUpdateRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
+import com.iamnirvan.restaurant.core.models.responses.address.AddressGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerRegisterResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerUpdateResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.AccountUpdateResponse;
+import com.iamnirvan.restaurant.core.repositories.AddressRepository;
 import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
 import com.iamnirvan.restaurant.core.repositories.RoleRepository;
@@ -39,6 +41,7 @@ public class CustomerService implements ICustomerService {
     private final CartRepository cartRepository;
     private final AccountService accountService;
     private final RoleRepository roleRepository;
+    private final AddressRepository addressRepository;
 
     /**
      * Registers a new customer.
@@ -98,9 +101,9 @@ public class CustomerService implements ICustomerService {
            boolean alreadyHaveMainAddress = false;
 
            for (AddressCreateRequestWithoutCustomer address : request.getAddresses()) {
-               if (!alreadyHaveMainAddress && address.isMain()) {
+               if (!alreadyHaveMainAddress && address.getIsMain()) {
                    alreadyHaveMainAddress = true;
-               } else if (alreadyHaveMainAddress && address.isMain()) {
+               } else if (alreadyHaveMainAddress && address.getIsMain()) {
                    throw new BadRequestException("Only one address can be marked as main");
                }
 
@@ -110,7 +113,7 @@ public class CustomerService implements ICustomerService {
                                .city(address.getCity())
                                .province(address.getProvince())
                                .buildingNumber(address.getBuildingNumber())
-                               .isMain(address.isMain())
+                               .isMain(address.getIsMain())
                                .customer(customer)
                                .created(OffsetDateTime.now())
                                .build()
@@ -209,20 +212,32 @@ public class CustomerService implements ICustomerService {
     @Override
     public List<CustomerGetResponse> getCustomers(Long id) {
         if (id != null) {
-            Customer customer = customerRepository.findById(id).orElseThrow(() ->
+            final Customer customer = customerRepository.findById(id).orElseThrow(() ->
                     new NotFoundException(String.format("Customer with id %s does not exist", id)));
 
-            Cart cart = cartRepository.findCurrentActiveCartByCustomerId(id).orElseThrow(() ->
+            final Cart cart = cartRepository.findCurrentActiveCartByCustomerId(id).orElseThrow(() ->
                     new NotFoundException(String.format("Could not find active cart for customer with id %s", id)));
-            return List.of(Parser.toCustomerGetResponse(customer, cart));
+
+            final Address address = addressRepository.getMainAddress(id);
+            if (address == null) {
+                throw new NotFoundException(String.format("Could not find main address for customer with id %s", id));
+            }
+
+            return List.of(Parser.toCustomerGetResponse(customer, cart, address));
         }
 
-        List<CustomerGetResponse> response = new ArrayList<>();
-        List<Customer> customers = customerRepository.findAll();
+        final List<CustomerGetResponse> response = new ArrayList<>();
+        final List<Customer> customers = customerRepository.findAll();
         for (Customer customer : customers) {
-            Cart cart = cartRepository.findCurrentActiveCartByCustomerId(customer.getId()).orElseThrow(() ->
-                    new NotFoundException(String.format("Could not find active cart for customer with id %s", customer.getId())));
-            response.add(Parser.toCustomerGetResponse(customer, cart));
+            final Cart cart = cartRepository.findCurrentActiveCartByCustomerId(customer.getId()).orElseThrow(() ->
+                    new NotFoundException("Could not find active cart"));
+
+            final Address address = addressRepository.getMainAddress(customer.getId());
+            if (address == null) {
+                throw new NotFoundException("Could not find main address");
+            }
+
+            response.add(Parser.toCustomerGetResponse(customer, cart, address));
         }
         return response;
 //        return customerRepository.findAll().stream().map(Parser::toCustomerGetResponse).collect(Collectors.toList());
@@ -242,7 +257,7 @@ public class CustomerService implements ICustomerService {
                     .build();
         }
 
-        public static CustomerGetResponse toCustomerGetResponse(@NotNull Customer customer, Cart cart) {
+        public static CustomerGetResponse toCustomerGetResponse(@NotNull Customer customer, Cart cart, @NotNull Address address) {
             final Account account = customer.getAccount();
 
             return CustomerGetResponse.builder()
@@ -250,6 +265,14 @@ public class CustomerService implements ICustomerService {
                     .firstName(customer.getFirstName())
                     .lastName(customer.getLastName())
                     .account(AccountService.Parser.toAccountGetResponse(account))
+                    .address(AddressGetResponse.builder()
+                            .id(address.getId())
+                            .province(address.getProvince())
+                            .city(address.getCity())
+                            .streetName(address.getStreet())
+                            .buildingNumber(address.getBuildingNumber())
+                            .isMain(address.isMain())
+                            .build())
                     .cartId(cart != null ? cart.getId() : null)
                     .created(customer.getCreated())
                     .updated(customer.getUpdated())

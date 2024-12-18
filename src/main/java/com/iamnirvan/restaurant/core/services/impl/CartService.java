@@ -183,7 +183,7 @@ public class CartService implements ICartService {
         public static GetCartResponse toGetCartResponse(Cart cart) {
             return GetCartResponse.builder()
                     .id(cart.getId())
-                    .totalValue(cart.getTotalValue())
+                    .totalValue(cart.getTotalValue() == null ? 0 : cart.getTotalValue())
                     //.dishes(cart.getDishPortionCarts().stream().map(cartContents -> Parser.toDishPortionGetResponse(cartContents.getDishPortion(), cartContents.getQuantity())).collect(Collectors.toList()))
                     .dishes(cart.getDishPortionCarts().stream()
                             .map(cartContents -> Parser.toDishPortionGetResponse(cartContents.getDishPortion(), cartContents.getQuantity()))

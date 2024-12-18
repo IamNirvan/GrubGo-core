@@ -8,6 +8,7 @@ import com.iamnirvan.restaurant.core.models.entities.*;
 import com.iamnirvan.restaurant.core.models.requests.login.LoginRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountUpdateRequest;
+import com.iamnirvan.restaurant.core.models.responses.address.AddressGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerLoginResponse;
 import com.iamnirvan.restaurant.core.models.responses.customer.CustomerTokenDataGetResponse;
@@ -41,11 +42,12 @@ public class AccountService implements IAccountService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final CartRepository cartRepository;
+    private final AddressRepository addressRepository;
 
     @Autowired
     public AccountService(AccountRepository accountRepository, RoleRepository roleRepository, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
                           CustomerRepository customerRepository,
-                          EmployeeRepository employeeRepository, CartRepository cartRepository) {
+                          EmployeeRepository employeeRepository, CartRepository cartRepository, AddressRepository addressRepository) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = new BCryptPasswordEncoder(10);
@@ -54,6 +56,7 @@ public class AccountService implements IAccountService {
         this.customerRepository = customerRepository;
         this.employeeRepository = employeeRepository;
         this.cartRepository = cartRepository;
+        this.addressRepository = addressRepository;
     }
 
     @Override
@@ -148,13 +151,18 @@ public class AccountService implements IAccountService {
                     () -> new NotFoundException("Customer not found")
             );
 
+            final Address address = addressRepository.getMainAddress(customer.getId());
+            if (address == null) {
+                throw new NotFoundException("Address not found");
+            }
+
             final Cart cart = cartRepository.findCurrentActiveCartByCustomerId(customerTokenDetails.getId()).orElseThrow(
                     () -> new NotFoundException("Cart not found")
             );
 
             final String token = jwtUtil.generateToken(loginRequest.getUsername(), principal);
 
-            return Parser.toCustomerLoginResponse(token, customer, account, cart);
+            return Parser.toCustomerLoginResponse(token, customer, account, cart, address);
         }
         return null;
     }
@@ -234,7 +242,7 @@ public class AccountService implements IAccountService {
                     .build();
         }
 
-        public static CustomerLoginResponse toCustomerLoginResponse(@NotNull String token, @NotNull Customer customer, @NotNull Account account, @NotNull Cart cart) {
+        public static CustomerLoginResponse toCustomerLoginResponse(@NotNull String token, @NotNull Customer customer, @NotNull Account account, @NotNull Cart cart, @NotNull Address address) {
             return CustomerLoginResponse.builder()
                     .token(token)
                     .userInfo(CustomerGetResponse.builder()
@@ -245,6 +253,14 @@ public class AccountService implements IAccountService {
                             .created(customer.getCreated())
                             .updated(customer.getUpdated())
                             .account(toAccountGetResponse(account))
+                            .address(AddressGetResponse.builder()
+                                    .id(address.getId())
+                                    .province(address.getProvince())
+                                    .city(address.getCity())
+                                    .streetName(address.getStreet())
+                                    .buildingNumber(address.getBuildingNumber())
+                                    .isMain(address.isMain())
+                                    .build())
                             .build())
                     .build();
         }

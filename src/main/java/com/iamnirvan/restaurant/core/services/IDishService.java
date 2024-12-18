@@ -15,5 +15,6 @@ public interface IDishService {
     List<DishUpdateResponse> updateDish(List<DishUpdateRequest> requests);
     List<DishDeleteResponse> deleteDish(List<Long> ids);
     List<DishGetResponse> getDishes(Long id, boolean includeImg);
+    List<DishGetResponse> getDishesToBeReviewed(Long customerId);
     DishMetrics getDishMetrics(Long id);
 }

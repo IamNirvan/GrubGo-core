@@ -179,10 +179,11 @@ CREATE SEQUENCE IF NOT EXISTS dish_portion_cart_sequence START WITH 1 INCREMENT 
 
 CREATE TABLE dish_portion_cart
 (
-    id              BIGINT NOT NULL,
+    id              BIGINT  NOT NULL,
     quantity        INTEGER,
     cart_id         BIGINT,
     dish_portion_id BIGINT,
+    reviewed        BOOLEAN NOT NULL,
     CONSTRAINT pk_dish_portion_cart PRIMARY KEY (id)
 );
 

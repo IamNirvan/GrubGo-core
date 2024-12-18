@@ -27,6 +27,15 @@ public class DishController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @GetMapping("/review/pending")
+    public ResponseEntity<?> getDishesToBeReviewed(@RequestParam(value = "customerId") Long customerId) {
+        final List<DishGetResponse> response = dishService.getDishesToBeReviewed(customerId);
+        if (response.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping
     public ResponseEntity<?> createDishes(@ModelAttribute DishCreateRequestList payload) {
         return new ResponseEntity<>(dishService.createDish(payload.getRequests()), HttpStatus.CREATED);

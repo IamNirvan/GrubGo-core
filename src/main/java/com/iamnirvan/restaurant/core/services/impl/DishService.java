@@ -205,6 +205,12 @@ public class DishService implements IDishService {
     }
 
     @Override
+    public List<DishGetResponse> getDishesToBeReviewed(Long customerId) {
+        List<Dish> dishes = dishRepository.getDishesToBeReviewedByCustomer(customerId);
+        return dishes.stream().map(dish -> Parser.toDishGetResponse(dish, false)).collect(Collectors.toList());
+    }
+
+    @Override
     public DishMetrics getDishMetrics(Long id) {
         dishRepository.findById(id).orElseThrow(
                 () -> new NotFoundException(String.format("Dish with id %s does not exist", id))
@@ -214,8 +220,9 @@ public class DishService implements IDishService {
         final LocalDateTime startDate = today.atTime(LocalTime.MIN);
         final LocalDateTime endDate = today.atTime(LocalTime.MAX);
 
+        float revenueAccountedFor = dishRepository.getRevenueAccountedFor(id) == null ? 0 : dishRepository.getRevenueAccountedFor(id);
         return Parser.toDishStats(
-                dishRepository.getRevenueAccountedFor(id),
+                revenueAccountedFor,
                 dishRepository.getUnitsSoldToday(id, startDate.toString(), endDate.toString()),
                 dishRepository.getUnitsSoldThisQuarter(id),
                 dishRepository.getMonthlySalesForDish(id)

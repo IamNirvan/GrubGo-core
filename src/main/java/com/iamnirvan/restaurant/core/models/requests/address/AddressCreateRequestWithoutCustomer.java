@@ -13,5 +13,5 @@ public class AddressCreateRequestWithoutCustomer {
     private String street;
     @NotBlank(message = "a valid building number is required")
     private String buildingNumber;
-    private boolean isMain;
+    private Boolean isMain;
 }

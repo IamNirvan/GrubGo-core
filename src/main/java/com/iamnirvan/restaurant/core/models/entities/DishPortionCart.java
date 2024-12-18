@@ -24,4 +24,5 @@ public class DishPortionCart {
     private Cart cart;
     @ManyToOne(fetch = FetchType.LAZY)
     private DishPortion dishPortion;
+    private boolean reviewed;
 }
