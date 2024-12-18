@@ -17,28 +17,6 @@ import java.util.List;
 public class CartController {
     private final ICartService cartService;
 
-//    @GetMapping
-//    public ResponseEntity<?> getPortions(@RequestParam(value = "id", required = false) Long id) {
-//        return new ResponseEntity<>(cartService.getCart(id), HttpStatus.OK);
-//    }
-
-//    @PutMapping("/{id}/add/dish")
-//    public ResponseEntity<?> addDishesIntoCart(
-//            @PathVariable("id") Long id,
-//            @Valid @RequestBody List<AddDishIntoCartRequest> requests
-//    ) {
-//        return new ResponseEntity<>(cartService.manipulateCartContent(id, requests), HttpStatus.OK);
-//    }
-
-//    @PutMapping("/{id}/remove/dish")
-//    public ResponseEntity<?> removeDishesFromCart(
-//            @PathVariable("id") Long id,
-//            @Valid @RequestBody List<RemoveDishFromCartRequest> requests
-//    ) {
-//        return new ResponseEntity<>(cartService.removeDishPortionFromCart(id, requests), HttpStatus.OK);
-//    }
-
-
     @PatchMapping("/{id}")
     public ResponseEntity<?> manipulateCartContent(
             @PathVariable("id") Long id,
@@ -52,5 +30,4 @@ public class CartController {
     public ResponseEntity<?> getCartContent(@PathVariable("id") Long id) {
         return new ResponseEntity<>(cartService.getCartContent(id), HttpStatus.OK);
     }
-
 }
