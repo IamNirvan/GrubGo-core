@@ -16,12 +16,12 @@ public class LoginController {
     private final AccountService accountService;
 
     @PostMapping("/customer/login")
-    public ResponseEntity<String> customerLogin(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> customerLogin(@Valid @RequestBody LoginRequest loginRequest) {
         return new ResponseEntity<>(accountService.customerLogin(loginRequest), HttpStatus.OK);
     }
 
     @PostMapping("/employee/login")
-    public ResponseEntity<String> employeeLogin(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> employeeLogin(@Valid @RequestBody LoginRequest loginRequest) {
         return new ResponseEntity<>(accountService.employeeLogin(loginRequest), HttpStatus.OK);
     }
 }

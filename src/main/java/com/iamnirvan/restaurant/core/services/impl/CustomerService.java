@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -210,9 +211,21 @@ public class CustomerService implements ICustomerService {
         if (id != null) {
             Customer customer = customerRepository.findById(id).orElseThrow(() ->
                     new NotFoundException(String.format("Customer with id %s does not exist", id)));
-            return List.of(Parser.toCustomerGetResponse(customer));
+
+            Cart cart = cartRepository.findCurrentActiveCartByCustomerId(id).orElseThrow(() ->
+                    new NotFoundException(String.format("Could not find active cart for customer with id %s", id)));
+            return List.of(Parser.toCustomerGetResponse(customer, cart));
         }
-        return customerRepository.findAll().stream().map(Parser::toCustomerGetResponse).collect(Collectors.toList());
+
+        List<CustomerGetResponse> response = new ArrayList<>();
+        List<Customer> customers = customerRepository.findAll();
+        for (Customer customer : customers) {
+            Cart cart = cartRepository.findCurrentActiveCartByCustomerId(customer.getId()).orElseThrow(() ->
+                    new NotFoundException(String.format("Could not find active cart for customer with id %s", customer.getId())));
+            response.add(Parser.toCustomerGetResponse(customer, cart));
+        }
+        return response;
+//        return customerRepository.findAll().stream().map(Parser::toCustomerGetResponse).collect(Collectors.toList());
     }
 
 
@@ -229,7 +242,7 @@ public class CustomerService implements ICustomerService {
                     .build();
         }
 
-        public static CustomerGetResponse toCustomerGetResponse(@NotNull Customer customer) {
+        public static CustomerGetResponse toCustomerGetResponse(@NotNull Customer customer, Cart cart) {
             final Account account = customer.getAccount();
 
             return CustomerGetResponse.builder()
@@ -237,6 +250,7 @@ public class CustomerService implements ICustomerService {
                     .firstName(customer.getFirstName())
                     .lastName(customer.getLastName())
                     .account(AccountService.Parser.toAccountGetResponse(account))
+                    .cartId(cart != null ? cart.getId() : null)
                     .created(customer.getCreated())
                     .updated(customer.getUpdated())
                     .build();

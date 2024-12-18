@@ -8,10 +8,8 @@ import java.time.OffsetDateTime;
 
 @Data
 @Builder
-public class FoodOrderGetResponse {
+public class FoodOrderUpdateStatusResponse {
     private Long id;
-    private String notes;
     private EFoodOrderStatus status;
-    private Double total;
     private OffsetDateTime date;
 }

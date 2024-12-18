@@ -1,15 +1,16 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
 import com.iamnirvan.restaurant.core.enums.EActiveStatus;
-import com.iamnirvan.restaurant.core.enums.EStatus;
+import com.iamnirvan.restaurant.core.enums.EFoodOrderStatus;
+import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.entities.Cart;
 import com.iamnirvan.restaurant.core.models.entities.Customer;
-import com.iamnirvan.restaurant.core.models.entities.DishPortionCart;
 import com.iamnirvan.restaurant.core.models.entities.FoodOrder;
 import com.iamnirvan.restaurant.core.models.requests.food_order.FoodOrderCreateRequest;
 import com.iamnirvan.restaurant.core.models.responses.food_order.FoodOrderCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.food_order.FoodOrderGetResponse;
+import com.iamnirvan.restaurant.core.models.responses.food_order.FoodOrderUpdateStatusResponse;
 import com.iamnirvan.restaurant.core.repositories.CartRepository;
 import com.iamnirvan.restaurant.core.repositories.FoodOrderRepository;
 import com.iamnirvan.restaurant.core.services.IFoodOrderService;
@@ -50,7 +51,7 @@ public class FoodOrderService implements IFoodOrderService {
 
             FoodOrder foodOrder = FoodOrder.builder()
                     .notes(request.getNotes())
-                    .status(EStatus.IN_PROGRESS)
+                    .status(EFoodOrderStatus.IN_PROGRESS)
                     .total(cart.getTotalValue())
                     .date(OffsetDateTime.now())
                     .cart(cart)
@@ -110,6 +111,45 @@ public class FoodOrderService implements IFoodOrderService {
         return foodOrderRepository.findAllOrderByDateAsc().stream().map(Parser::toFoodOrderGetResponse).collect(Collectors.toList());
     }
 
+
+    /**
+     * Updates the status of a food order based on the provided order ID and status.
+     *
+     * @param id the ID of the food order to update
+     * @param status the new status to set for the food order
+     * @return a FoodOrderUpdateStatusResponse object containing the details of the updated order
+     * @throws NotFoundException if the order with the specified ID does not exist
+     * @throws ConflictException if the status transition is not allowed
+     */
+    @Override
+    public FoodOrderUpdateStatusResponse updateOrderStatus(Long id, EFoodOrderStatus status) {
+        final FoodOrder order = foodOrderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Order with id %d does not exist", id)));
+
+        if (status == EFoodOrderStatus.IN_PROGRESS) {
+            order.setStatus(status);
+        } else if (status == EFoodOrderStatus.COMPLETED) {
+            if (order.getStatus() != EFoodOrderStatus.IN_PROGRESS) {
+                throw new ConflictException("Order must be in progress to be completed");
+            }
+            order.setStatus(status);
+        } else if (status == EFoodOrderStatus.CANCELLED) {
+            if (order.getStatus() != EFoodOrderStatus.IN_PROGRESS) {
+                throw new ConflictException("Order must be in progress to be cancelled");
+            }
+            order.setStatus(status);
+        } else if (status == EFoodOrderStatus.PAID) {
+            if (order.getStatus() != EFoodOrderStatus.COMPLETED) {
+                throw new ConflictException("Order must be completed to be paid");
+            }
+            order.setStatus(status);
+        }
+        foodOrderRepository.save(order);
+        log.debug("Updated order status: {}", order);
+
+        return Parser.toFoodOrderUpdateStatusResponse(order);
+    }
+
     public static class Parser {
         public static FoodOrderCreateResponse toFoodOrderCreateResponse(@NotNull FoodOrder foodOrder) {
             return FoodOrderCreateResponse.builder()
@@ -129,6 +169,13 @@ public class FoodOrderService implements IFoodOrderService {
                     .status(foodOrder.getStatus())
                     .total(foodOrder.getTotal())
                     .date(foodOrder.getDate())
+                    .build();
+        }
+
+        public static FoodOrderUpdateStatusResponse toFoodOrderUpdateStatusResponse(@NotNull FoodOrder foodOrder) {
+            return FoodOrderUpdateStatusResponse.builder()
+                    .id(foodOrder.getId())
+                    .status(foodOrder.getStatus())
                     .build();
         }
     }

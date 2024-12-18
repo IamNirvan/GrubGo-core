@@ -14,6 +14,7 @@ public class CustomerGetResponse {
     private String firstName;
     private String lastName;
     private AccountGetResponse account;
+    private Long cartId;
     private OffsetDateTime created;
     private OffsetDateTime updated;
 }

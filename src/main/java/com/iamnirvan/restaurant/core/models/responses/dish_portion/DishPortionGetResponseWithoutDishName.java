@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class DishPortionGetResponseWithoutDishName {
+    private Long id;
     private String portionName;
     private Double price;
 }

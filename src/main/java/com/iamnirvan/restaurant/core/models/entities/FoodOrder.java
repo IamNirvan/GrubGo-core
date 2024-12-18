@@ -1,7 +1,7 @@
 package com.iamnirvan.restaurant.core.models.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.iamnirvan.restaurant.core.enums.EStatus;
+import com.iamnirvan.restaurant.core.enums.EFoodOrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,7 +25,7 @@ public class FoodOrder {
     private Long id;
     private String notes;
     @Enumerated(EnumType.STRING)
-    private EStatus status;
+    private EFoodOrderStatus status;
     private Double total;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", referencedColumnName = "id")

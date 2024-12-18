@@ -9,7 +9,7 @@ import com.iamnirvan.restaurant.core.models.responses.cart.RemoveDishFromCartRes
 import java.util.List;
 
 public interface ICartService {
-    List<AddDishIntoCartResponse> manipulateCartContent(Long id, List<AddDishIntoCartRequest> requests);
+    List<AddDishIntoCartResponse> manipulateCartContent(Long id, List<AddDishIntoCartRequest> requests, boolean overrideQuantity);
     List<RemoveDishFromCartResponse> removeDishPortionFromCart(Long id, List<RemoveDishFromCartRequest> requests);
     GetCartResponse getCartContent(Long id);
 }

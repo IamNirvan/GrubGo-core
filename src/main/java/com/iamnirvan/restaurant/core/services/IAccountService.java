@@ -4,6 +4,8 @@ import com.iamnirvan.restaurant.core.models.entities.Account;
 import com.iamnirvan.restaurant.core.models.requests.login.LoginRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.user.AccountUpdateRequest;
+import com.iamnirvan.restaurant.core.models.responses.customer.CustomerLoginResponse;
+import com.iamnirvan.restaurant.core.models.responses.employee.EmployeeLoginResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.UserDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.AccountGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.user.AccountUpdateResponse;
@@ -16,6 +18,6 @@ public interface IAccountService {
     AccountUpdateResponse updateAccount(Long id, AccountUpdateRequest request);
     AccountGetResponse getAccount(Long id);
     UserDeleteResponse deleteAccount(Long id);
-    String customerLogin(LoginRequest loginRequest);
-    String employeeLogin(LoginRequest loginRequest);
+    CustomerLoginResponse customerLogin(LoginRequest loginRequest);
+    EmployeeLoginResponse employeeLogin(LoginRequest loginRequest);
 }

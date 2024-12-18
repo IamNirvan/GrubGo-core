@@ -42,9 +42,10 @@ public class CartController {
     @PatchMapping("/{id}")
     public ResponseEntity<?> manipulateCartContent(
             @PathVariable("id") Long id,
-            @Valid @RequestBody List<AddDishIntoCartRequest> requests
+            @Valid @RequestBody List<AddDishIntoCartRequest> requests,
+            @RequestParam(value = "overrideQuantity", required = false) boolean overrideQuantity
     ) {
-        return new ResponseEntity<>(cartService.manipulateCartContent(id, requests), HttpStatus.OK);
+        return new ResponseEntity<>(cartService.manipulateCartContent(id, requests, overrideQuantity), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

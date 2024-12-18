@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,7 +51,7 @@ public class CartService implements ICartService {
      */
     @Override
     @Transactional
-    public List<AddDishIntoCartResponse> manipulateCartContent(Long id, List<AddDishIntoCartRequest> requests) {
+    public List<AddDishIntoCartResponse> manipulateCartContent(Long id, List<AddDishIntoCartRequest> requests, boolean overrideQuantity) {
         // TODO: Get the customer's active cart (get the customer id from the token)
         final List<AddDishIntoCartResponse> result = new ArrayList<>();
 
@@ -72,9 +73,16 @@ public class CartService implements ICartService {
             if (dishPortionCart != null) {
                 // This means the dishPortion is already in then cart... Therefore, update the quantity.
                 if (request.getQuantity() == 0) {
+                    dishPortionCart.setQuantity(0);
                     removeItemFromCart = true;
                 } else {
-                    dishPortionCart.setQuantity(request.getQuantity());
+                    // If there is an existing amount of the dish portion in the cart, increase the quantity
+                    if (overrideQuantity) {
+                        dishPortionCart.setQuantity(request.getQuantity());
+                    } else {
+                        // Otherwise increment the existing quantity...
+                        dishPortionCart.setQuantity(dishPortionCart.getQuantity() + request.getQuantity());
+                    }
                 }
             } else {
                 // Check if the quantity is 0
@@ -101,7 +109,7 @@ public class CartService implements ICartService {
             cartRepository.save(cart);
             log.debug("Updated contents of the cart");
 
-            result.add(Parser.toAddDishIntoCartResponse(cart, dishPortion, request.getQuantity()));
+            result.add(Parser.toAddDishIntoCartResponse(cart, dishPortion, dishPortionCart.getQuantity()));
         }
 
         return result;
@@ -130,6 +138,7 @@ public class CartService implements ICartService {
             result.add(RemoveDishFromCartResponse.builder()
                     .dishPortionCartId(dishPortionCart.getId())
                     .dishPortion(DishPortionGetResponse.builder()
+                            .id(dishPortionCart.getDishPortion().getId())
                             .dishName(dishPortionCart.getDishPortion().getDish().getName())
                             .portionName(dishPortionCart.getDishPortion().getPortion().getName())
                             .price(dishPortionCart.getDishPortion().getPrice())
@@ -162,6 +171,7 @@ public class CartService implements ICartService {
                     .cartId(cart.getId())
                     .totalValue(cart.getTotalValue())
                     .dishPortion(DishPortionGetResponse.builder()
+                            .id(dishPortion.getId())
                             .dishName(dishPortion.getDish().getName())
                             .portionName(dishPortion.getPortion().getName())
                             .price(dishPortion.getPrice())
@@ -173,12 +183,18 @@ public class CartService implements ICartService {
         public static GetCartResponse toGetCartResponse(Cart cart) {
             return GetCartResponse.builder()
                     .id(cart.getId())
-                    .dishes(cart.getDishPortionCarts().stream().map(cartContents -> Parser.toDishPortionGetResponse(cartContents.getDishPortion(), cartContents.getQuantity())).collect(Collectors.toList()))
+                    .totalValue(cart.getTotalValue())
+                    //.dishes(cart.getDishPortionCarts().stream().map(cartContents -> Parser.toDishPortionGetResponse(cartContents.getDishPortion(), cartContents.getQuantity())).collect(Collectors.toList()))
+                    .dishes(cart.getDishPortionCarts().stream()
+                            .map(cartContents -> Parser.toDishPortionGetResponse(cartContents.getDishPortion(), cartContents.getQuantity()))
+                            .sorted(Comparator.comparing(DishPortionGetResponse::getId))
+                            .collect(Collectors.toList()))
                     .build();
         }
 
         public static DishPortionGetResponse toDishPortionGetResponse(DishPortion dishPortion, int quantity) {
             return DishPortionGetResponse.builder()
+                    .id(dishPortion.getId())
                     .dishName(dishPortion.getDish().getName())
                     .portionName(dishPortion.getPortion().getName())
                     .price(dishPortion.getPrice())

@@ -1,6 +1,6 @@
 package com.iamnirvan.restaurant.core.enums;
 
-public enum EStatus {
+public enum EFoodOrderStatus {
     COMPLETED,
     IN_PROGRESS,
     CANCELLED,

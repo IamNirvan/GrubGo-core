@@ -10,5 +10,6 @@ import java.util.List;
 @Builder
 public class GetCartResponse {
     private Long id;
+    private double totalValue;
     private List<DishPortionGetResponse> dishes;
 }

@@ -1,5 +1,6 @@
 package com.iamnirvan.restaurant.core.controllers;
 
+import com.iamnirvan.restaurant.core.enums.EFoodOrderStatus;
 import com.iamnirvan.restaurant.core.models.requests.food_order.FoodOrderCreateRequest;
 import com.iamnirvan.restaurant.core.models.responses.food_order.FoodOrderGetResponse;
 import com.iamnirvan.restaurant.core.services.IFoodOrderService;
@@ -34,5 +35,13 @@ public class FoodOrderController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateOrderStatus(
+            @PathVariable(value = "id", required = true) Long id,
+            @RequestParam(value = "status", required = true) EFoodOrderStatus status
+    ) {
+        return new ResponseEntity<>(foodOrderService.updateOrderStatus(id, status), HttpStatus.OK);
     }
 }
