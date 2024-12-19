@@ -14,6 +14,8 @@ import com.iamnirvan.restaurant.core.models.responses.dish.DishDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishUpdateResponse;
 import com.iamnirvan.restaurant.core.models.responses.dish_portion.DishPortionGetResponseWithoutDishName;
+import com.iamnirvan.restaurant.core.models.responses.dish_portion_cart.DishPortionCartToReview;
+import com.iamnirvan.restaurant.core.models.responses.dish_portion_cart.DishPortionCartToReviewProjection;
 import com.iamnirvan.restaurant.core.models.responses.metrics.DishMetrics;
 import com.iamnirvan.restaurant.core.models.responses.metrics.MonthlySales;
 import com.iamnirvan.restaurant.core.models.responses.metrics.UnitsSoldPerMonthProjection;
@@ -205,9 +207,20 @@ public class DishService implements IDishService {
     }
 
     @Override
-    public List<DishGetResponse> getDishesToBeReviewed(Long customerId) {
-        List<Dish> dishes = dishRepository.getDishesToBeReviewedByCustomer(customerId);
-        return dishes.stream().map(dish -> Parser.toDishGetResponse(dish, false)).collect(Collectors.toList());
+    public List<DishPortionCartToReview> getDishesToBeReviewed(Long customerId) {
+//        List<Dish> dishes = dishRepository.getDishesToBeReviewedByCustomer(customerId);
+//        return dishes.stream().map(dish -> Parser.toDishGetResponse(dish, false)).collect(Collectors.toList());
+
+        return dishRepository.getDishesToBeReviewedByCustomerV2(customerId);
+
+//        List<DishPortionCartToReviewProjection> dishes = dishRepository.getDishesToBeReviewedByCustomerV2(customerId);
+//        return dishes.stream().map(dish -> DishPortionCartToReview.builder()
+//                .orderDate(dish.getOrderDate())
+//                .dishPortionCartId(dish.getDishPortionCartId())
+//                .dishId(dish.getDishId())
+//                .name(dish.getName())
+//                .image(dish.getImage())
+//                .build()).collect(Collectors.toList());
     }
 
     @Override
@@ -319,5 +332,7 @@ public class DishService implements IDishService {
                     .monthlySales(monthlySales)
                     .build();
         }
+
+//        private static DishPortionCartToReview toDishPortionCartToReview()
     }
 }

@@ -144,7 +144,7 @@ CREATE TABLE review
     created     TIMESTAMP WITH TIME ZONE,
     updated     TIMESTAMP WITH TIME ZONE,
     title       VARCHAR(255),
-    content     VARCHAR(255),
+    content     TEXT,
     rating      INTEGER,
     dish_id     BIGINT,
     customer_id BIGINT,

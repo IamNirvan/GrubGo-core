@@ -3,6 +3,7 @@ package com.iamnirvan.restaurant.core.controllers;
 import com.iamnirvan.restaurant.core.models.requests.dish.DishCreateRequestList;
 import com.iamnirvan.restaurant.core.models.requests.dish.DishUpdateRequestList;
 import com.iamnirvan.restaurant.core.models.responses.dish.DishGetResponse;
+import com.iamnirvan.restaurant.core.models.responses.dish_portion_cart.DishPortionCartToReview;
 import com.iamnirvan.restaurant.core.services.IDishService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class DishController {
 
     @GetMapping("/review/pending")
     public ResponseEntity<?> getDishesToBeReviewed(@RequestParam(value = "customerId") Long customerId) {
-        final List<DishGetResponse> response = dishService.getDishesToBeReviewed(customerId);
+        final List<DishPortionCartToReview> response = dishService.getDishesToBeReviewed(customerId);
         if (response.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }

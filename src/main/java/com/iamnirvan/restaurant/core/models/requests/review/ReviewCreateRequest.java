@@ -20,4 +20,7 @@ public class ReviewCreateRequest {
     @NotNull(message = "Dish id is required")
     @Min(value = 1, message = "A valid dish id is required")
     private Long dishId;
+    @NotNull(message = "Dish id is required")
+    @Min(value = 1, message = "A valid dish portion cart id is required")
+    private Long dishPortionCartId;
 }

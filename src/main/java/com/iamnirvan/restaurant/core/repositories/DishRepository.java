@@ -1,6 +1,8 @@
 package com.iamnirvan.restaurant.core.repositories;
 
 import com.iamnirvan.restaurant.core.models.entities.Dish;
+import com.iamnirvan.restaurant.core.models.responses.dish_portion_cart.DishPortionCartToReview;
+import com.iamnirvan.restaurant.core.models.responses.dish_portion_cart.DishPortionCartToReviewProjection;
 import com.iamnirvan.restaurant.core.models.responses.metrics.DishMetrics;
 import com.iamnirvan.restaurant.core.models.responses.metrics.UnitsSoldPerMonthProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -101,5 +103,23 @@ public interface DishRepository extends JpaRepository<Dish, Long> {
         where c2.id = :customerId and dpc.reviewed = false
     """, nativeQuery = true)
     List<Dish> getDishesToBeReviewedByCustomer(@Param("customerId") Long customerId);
+
+    @Query(value = """
+        select new com.iamnirvan.restaurant.core.models.responses.dish_portion_cart.DishPortionCartToReview(
+            fo.date,
+            dpc.id,
+            d.id,
+            d.name,
+            d.image
+        )
+        from DishPortionCart dpc
+        inner join Cart c on dpc.cart.id = c.id
+        inner join Customer c2 on c.customer.id = c2.id
+        inner join DishPortion dp on dpc.dishPortion.id = dp.id
+        inner join Dish d on dp.dish.id = d.id
+        inner join FoodOrder fo on c.id = fo.cart.id
+        where c2.id = :customerId and dpc.reviewed = false
+    """)
+    List<DishPortionCartToReview> getDishesToBeReviewedByCustomerV2(@Param("customerId") Long customerId);
 
 }

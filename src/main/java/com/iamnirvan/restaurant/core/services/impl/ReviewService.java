@@ -4,6 +4,7 @@ import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
 import com.iamnirvan.restaurant.core.models.entities.Customer;
 import com.iamnirvan.restaurant.core.models.entities.Dish;
+import com.iamnirvan.restaurant.core.models.entities.DishPortionCart;
 import com.iamnirvan.restaurant.core.models.entities.Review;
 import com.iamnirvan.restaurant.core.models.requests.review.ReviewCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.review.ReviewUpdateRequest;
@@ -11,6 +12,7 @@ import com.iamnirvan.restaurant.core.models.responses.review.ReviewCreateRespons
 import com.iamnirvan.restaurant.core.models.responses.review.ReviewDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.review.ReviewUpdateResponse;
 import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
+import com.iamnirvan.restaurant.core.repositories.DishPortionCartRepository;
 import com.iamnirvan.restaurant.core.repositories.DishRepository;
 import com.iamnirvan.restaurant.core.repositories.ReviewRepository;
 import com.iamnirvan.restaurant.core.services.IReviewService;
@@ -30,6 +32,7 @@ public class ReviewService implements IReviewService {
     private final ReviewRepository reviewRepository;
     private final CustomerRepository customerRepository;
     private final DishRepository dishRepository;
+    private final DishPortionCartRepository dishPortionCartRepository;
 
     /**
      * Create multiple reviews using a list of create requests
@@ -39,6 +42,7 @@ public class ReviewService implements IReviewService {
      * @throws NotFoundException if customer id or dish id does not exist
      */
     @Override
+    @Transactional
     public List<ReviewCreateResponse> createReview(List<ReviewCreateRequest> requests) throws NotFoundException{
         final List<ReviewCreateResponse> result = new ArrayList<>();
 
@@ -61,6 +65,12 @@ public class ReviewService implements IReviewService {
             reviewRepository.save(review);
             log.debug(String.format("Review created: %s", review));
 
+            // Find the specific dish portion in the order that the customer reviewd and mark it as reviewed...
+            DishPortionCart dishPortionCart = dishPortionCartRepository.findById(request.getDishPortionCartId())
+                    .orElseThrow(() -> new NotFoundException(String.format("Dish portion cart with id %s does not exist", request.getDishPortionCartId())));
+            dishPortionCart.setReviewed(true);
+            dishPortionCartRepository.save(dishPortionCart);
+
             result.add(ReviewCreateResponse.builder()
                     .id(review.getId())
                     .title(review.getTitle())
@@ -72,6 +82,7 @@ public class ReviewService implements IReviewService {
                     .updated(review.getUpdated())
                     .build());
         }
+
         return result;
     }
 

@@ -23,6 +23,7 @@ public class Review extends DateTimeWithoutUser {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "review_sequence")
     private Long id;
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String content;
     private Integer rating;
     @ManyToOne(fetch = FetchType.LAZY)
