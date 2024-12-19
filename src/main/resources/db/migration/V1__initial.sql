@@ -250,3 +250,14 @@ CREATE TABLE rules
 ALTER TABLE rules
     ADD CONSTRAINT uc_rules_rulename UNIQUE (rule_name);
 -- END OF RULES
+
+-- START OF DISH INGREDIENTS
+CREATE TABLE dish_ingredients
+(
+    dish_id    BIGINT NOT NULL,
+    ingredient VARCHAR(255)
+);
+
+ALTER TABLE dish_ingredients
+    ADD CONSTRAINT fk_dish_ingredients_on_dish FOREIGN KEY (dish_id) REFERENCES dish (id);
+-- END OF DISH INGREDIENTS

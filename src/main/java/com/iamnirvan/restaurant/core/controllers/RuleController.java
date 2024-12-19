@@ -2,6 +2,7 @@ package com.iamnirvan.restaurant.core.controllers;
 
 import com.iamnirvan.restaurant.core.models.requests.rules.RuleCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.rules.RuleUpdateRequest;
+import com.iamnirvan.restaurant.core.models.requests.rules.evaluation.EvaluateRulesRequest;
 import com.iamnirvan.restaurant.core.models.responses.rules.RuleGetResponse;
 import com.iamnirvan.restaurant.core.services.IRuleService;
 import jakarta.validation.Valid;
@@ -43,5 +44,10 @@ public class RuleController {
     @DeleteMapping
     public ResponseEntity<?> deleteRule(@RequestParam(value = "ids") List<Long> ids) {
         return ResponseEntity.ok(ruleService.deleteRule(ids));
+    }
+
+    @PostMapping("/evaluate")
+    public ResponseEntity<?> evaluateRules(@Valid @RequestBody EvaluateRulesRequest request) {
+        return ResponseEntity.ok(ruleService.evaluateRules(request));
     }
 }

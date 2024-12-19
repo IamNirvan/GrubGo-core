@@ -3,6 +3,7 @@ package com.iamnirvan.restaurant.core.services.impl;
 import com.iamnirvan.restaurant.core.exceptions.BadRequestException;
 import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
+import com.iamnirvan.restaurant.core.exceptions.ServerException;
 import com.iamnirvan.restaurant.core.models.entities.Dish;
 import com.iamnirvan.restaurant.core.models.entities.DishPortion;
 import com.iamnirvan.restaurant.core.models.entities.Portion;
@@ -81,6 +82,7 @@ public class DishService implements IDishService {
                     .name(request.getName())
                     .description(request.getDescription())
                     .image(compressedImage)
+                    .ingredients(request.getIngredients())
                     .created(OffsetDateTime.now())
                     .build();
 
@@ -156,6 +158,10 @@ public class DishService implements IDishService {
                 dish.setImage(compressedImage);
             }
 
+            if (request.getIngredients() != null) {
+                dish.setIngredients(request.getIngredients());
+            }
+
             dish.setUpdated(OffsetDateTime.now());
             dishRepository.save(dish);
             log.debug(String.format("Dish updated: %s", dish));
@@ -208,19 +214,7 @@ public class DishService implements IDishService {
 
     @Override
     public List<DishPortionCartToReview> getDishesToBeReviewed(Long customerId) {
-//        List<Dish> dishes = dishRepository.getDishesToBeReviewedByCustomer(customerId);
-//        return dishes.stream().map(dish -> Parser.toDishGetResponse(dish, false)).collect(Collectors.toList());
-
         return dishRepository.getDishesToBeReviewedByCustomerV2(customerId);
-
-//        List<DishPortionCartToReviewProjection> dishes = dishRepository.getDishesToBeReviewedByCustomerV2(customerId);
-//        return dishes.stream().map(dish -> DishPortionCartToReview.builder()
-//                .orderDate(dish.getOrderDate())
-//                .dishPortionCartId(dish.getDishPortionCartId())
-//                .dishId(dish.getDishId())
-//                .name(dish.getName())
-//                .image(dish.getImage())
-//                .build()).collect(Collectors.toList());
     }
 
     @Override
@@ -248,7 +242,7 @@ public class DishService implements IDishService {
                 return imageUtil.compressImage(file.getBytes());
             } catch (IOException e) {
                 log.error("Failed to compress image", e);
-                throw new RuntimeException(e);
+                throw new ServerException("failure when saving image");
             }
         }
 
@@ -259,6 +253,7 @@ public class DishService implements IDishService {
                     .id(dish.getId())
                     .name(dish.getName())
                     .description(dish.getDescription())
+                    .ingredients(dish.getIngredients())
                     .portions(dishPortions.stream().map(portion -> DishPortionGetResponseWithoutDishName.builder()
                             .id(portion.getId())
                             .portionName(portion.getPortion().getName())
@@ -273,6 +268,7 @@ public class DishService implements IDishService {
             return DishUpdateResponse.builder()
                     .id(dish.getId())
                     .name(dish.getName())
+                    .ingredients(dish.getIngredients())
                     .description(dish.getDescription())
                     .created(dish.getCreated())
                     .updated(dish.getUpdated())
@@ -296,6 +292,7 @@ public class DishService implements IDishService {
                     .id(dish.getId())
                     .name(dish.getName())
                     .description(dish.getDescription())
+                    .ingredients(dish.getIngredients())
                     .reviews(dish.getReviews().stream().map(review -> ReviewGetResponseWithoutDishId.builder()
                             .id(review.getId())
                             .title(review.getTitle())
@@ -332,7 +329,5 @@ public class DishService implements IDishService {
                     .monthlySales(monthlySales)
                     .build();
         }
-
-//        private static DishPortionCartToReview toDishPortionCartToReview()
     }
 }

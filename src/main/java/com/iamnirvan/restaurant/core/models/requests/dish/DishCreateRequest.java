@@ -21,4 +21,5 @@ public class DishCreateRequest {
     @NotNull(message = "a valid list of dish portions is required")
     private List<DishPortionCreateRequest> dishPortion;
     private MultipartFile image;
+    private List<String> ingredients;
 }

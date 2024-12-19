@@ -4,8 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
+import com.iamnirvan.restaurant.core.exceptions.ServerException;
 import com.iamnirvan.restaurant.core.models.entities.*;
-import com.iamnirvan.restaurant.core.models.requests.sentiment_analysis.AnalyseSentiment;
+import com.iamnirvan.restaurant.core.models.requests.fuse.sentiment_analysis.AnalyseSentiment;
 import com.iamnirvan.restaurant.core.models.responses.analyse_sentiment.AnalyseSentimentResponse;
 import com.iamnirvan.restaurant.core.repositories.*;
 import com.iamnirvan.restaurant.core.services.ISentimentAnalysisService;
@@ -44,7 +45,7 @@ public class SentimentAnalysisService implements ISentimentAnalysisService {
             payload = objMapper.writeValueAsString(new AnalyseSentiment(reviewsToAnalyse));
         } catch (JsonProcessingException e) {
             log.error("Error while converting object to JSON", e);
-            throw new RuntimeException(e);
+            throw new ServerException("failed to analyse sentiment");
         }
 
         // Create request object
@@ -64,11 +65,11 @@ public class SentimentAnalysisService implements ISentimentAnalysisService {
             if (response.code() == 200) {
                 return objMapper.readValue(responseBody, new com.fasterxml.jackson.core.type.TypeReference<>() {});
             } else {
-                throw new RuntimeException("Error while analysing sentiment");
+                throw new ServerException("Error while analysing sentiment");
             }
         } catch (Exception e) {
             log.error("Error while analysing sentiment", e);
-            throw new RuntimeException(e);
+            throw new ServerException("failed to analyse sentiment");
         }
     }
 }

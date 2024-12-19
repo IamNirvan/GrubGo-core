@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -14,6 +15,7 @@ public class DishGetResponse {
     private Long id;
     private String name;
     private String description;
+    private List<String> ingredients;
     private Set<DishPortionGetResponseWithoutDishName> dishPortions;
     private Set<ReviewGetResponseWithoutDishId> reviews;
     private byte[] image;

@@ -1,20 +1,33 @@
 package com.iamnirvan.restaurant.core.services.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.iamnirvan.restaurant.core.exceptions.ConflictException;
 import com.iamnirvan.restaurant.core.exceptions.NotFoundException;
+import com.iamnirvan.restaurant.core.exceptions.ServerException;
+import com.iamnirvan.restaurant.core.models.entities.Customer;
+import com.iamnirvan.restaurant.core.models.entities.CustomerAllergen;
+import com.iamnirvan.restaurant.core.models.entities.Dish;
 import com.iamnirvan.restaurant.core.models.entities.Rule;
 import com.iamnirvan.restaurant.core.models.requests.rules.RuleCreateRequest;
 import com.iamnirvan.restaurant.core.models.requests.rules.RuleUpdateRequest;
+import com.iamnirvan.restaurant.core.models.requests.rules.evaluation.EvaluateRulesRequest;
 import com.iamnirvan.restaurant.core.models.responses.rules.RuleCreateResponse;
 import com.iamnirvan.restaurant.core.models.responses.rules.RuleDeleteResponse;
 import com.iamnirvan.restaurant.core.models.responses.rules.RuleGetResponse;
 import com.iamnirvan.restaurant.core.models.responses.rules.RuleUpdateResponse;
+import com.iamnirvan.restaurant.core.models.responses.rules.evaluation.EvaluateRuleResponse;
+import com.iamnirvan.restaurant.core.repositories.CustomerRepository;
+import com.iamnirvan.restaurant.core.repositories.DishRepository;
 import com.iamnirvan.restaurant.core.repositories.RuleRepository;
 import com.iamnirvan.restaurant.core.services.IRuleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -26,7 +39,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Log4j2
 public class RuleService implements IRuleService {
+    @Value("${rule.engine.url}")
+    private String ruleEngineBaseUrl;
     private final RuleRepository ruleRepository;
+    private final DishRepository dishRepository;
+    private final CustomerRepository customerRepository;
+    private final OkHttpClient httpClient = new OkHttpClient();
+    private final ObjectMapper objMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     /**
      * Creates new rules based on the provided list of rule creation requests.
@@ -142,6 +161,50 @@ public class RuleService implements IRuleService {
         return response;
     }
 
+    @Override
+    public List<EvaluateRuleResponse> evaluateRules(EvaluateRulesRequest request) {
+        final Dish dish = dishRepository.findById(request.getDishId()).orElseThrow(
+                () -> new NotFoundException(String.format("Dish with id %s not found", request.getDishId())));
+
+        final Customer customer = customerRepository.findById(request.getCustomerId()).orElseThrow(
+                () -> new NotFoundException(String.format("Customer with id %s not found", request.getCustomerId())));
+
+
+        // Create payload
+        final com.iamnirvan.restaurant.core.models.requests.fuse.rules.EvaluateRulesRequest fuseRequest = Parser.toEvaluateRulesFuseRequest(dish, customer);
+        String payload;
+        try {
+            payload = objMapper.writeValueAsString(fuseRequest);
+        } catch (JsonProcessingException e) {
+            log.error("Error while converting object to JSON", e);
+            throw new ServerException("failed to evaluate rules");
+        }
+
+        // Create request object
+        final Request newRequest = new Request.Builder()
+                .url(String.format("%s/v1/evaluate/rule", ruleEngineBaseUrl))
+                .post(RequestBody.create(payload, MediaType.parse("application/json; charset=utf-8")))
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        // Send request and handle response
+        try (Response response = httpClient.newCall(newRequest).execute()) {
+            String responseBody = "";
+            if (response.body() != null) {
+                responseBody = response.body().string();
+            }
+
+            if (response.code() == 200) {
+                return objMapper.readValue(responseBody, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+            } else {
+                throw new ServerException("Error while analysing sentiment");
+            }
+        } catch (Exception e) {
+            log.error("Error while analysing sentiment", e);
+            throw new ServerException("Error while analysing sentiment");
+        }
+    }
+
     public static class Parser {
         public static RuleCreateResponse toRuleCreateResponse(@NotNull Rule rule) {
             return RuleCreateResponse.builder()
@@ -179,6 +242,26 @@ public class RuleService implements IRuleService {
                     .ruleName(rule.getRuleName())
                     .rule(rule.getRule())
                     .created(rule.getCreated())
+                    .build();
+        }
+
+        public static com.iamnirvan.restaurant.core.models.requests.fuse.rules.EvaluateRulesRequest toEvaluateRulesFuseRequest(@NotNull Dish dish, @NotNull Customer customer) {
+            return com.iamnirvan.restaurant.core.models.requests.fuse.rules.EvaluateRulesRequest.builder()
+                    .dish(com.iamnirvan.restaurant.core.models.requests.fuse.rules.DishDetails.builder()
+                            .id(dish.getId())
+                            .name(dish.getName())
+                            .description(dish.getDescription())
+                            .ingredients(dish.getIngredients())
+                            .build())
+                    .customer(com.iamnirvan.restaurant.core.models.requests.fuse.rules.CustomerDetails.builder()
+                            .id(customer.getId())
+                            .firstName(customer.getFirstName())
+                            .lastName(customer.getLastName())
+                            .allergens(customer.getAllergens().stream()
+                                    .map(CustomerAllergen::getName)
+                                    .collect(Collectors.toList()))
+                            .build())
+                    .responses(new ArrayList<>())
                     .build();
         }
     }

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,4 +34,8 @@ public class Dish extends DateTimeWithoutUser {
     @OneToMany(mappedBy = "dish", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private Set<DishPortion> dishPortions;
+    @ElementCollection
+    @CollectionTable(name = "dish_ingredients", joinColumns = @JoinColumn(name = "dish_id"))
+    @Column(name = "ingredient")
+    private List<String> ingredients;
 }

@@ -1,4 +1,4 @@
-package com.iamnirvan.restaurant.core.models.requests.sentiment_analysis;
+package com.iamnirvan.restaurant.core.models.requests.fuse.sentiment_analysis;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -13,6 +13,7 @@ public class DishCreateResponse {
     private Long id;
     private String name;
     private String description;
+    private List<String> ingredients;
     private List<DishPortionGetResponseWithoutDishName> portions;
     private OffsetDateTime created;
     private OffsetDateTime updated;
